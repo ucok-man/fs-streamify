@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"time"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/rs/zerolog"
@@ -20,9 +21,21 @@ type Config struct {
 	Log  struct {
 		Level string `mapstructure:"level"`
 	} `mapstructure:"log"`
+	DB struct {
+		MongoURI      string        `mapstructure:"mongo_uri"`
+		DatabaseName  string        `mapstructure:"database_name"`
+		MaxConnecting uint64        `mapstructure:"max_connecting"`
+		MaxPoolSize   uint64        `mapstructure:"max_pool_size"`
+		MaxIdleTime   time.Duration `mapstructure:"max_idle_time"`
+	} `mapstructure:"db"`
+
 	Cors struct {
 		Origins []string `mapstructure:"origins"` // viper/mapstructure automatically split by comma and convert it
 	} `mapstructure:"cors"`
+	StreamIO struct {
+		ApiKey    string `mapstructure:"api_key"`
+		ApiSecret string `mapstructure:"api_secret"`
+	} `mapstructure:"streamio"`
 }
 
 func New() Config {
