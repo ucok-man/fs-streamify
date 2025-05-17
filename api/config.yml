@@ -1,4 +1,0 @@
-port: 8000
-env: "development"
-log:
-  level: "info"
