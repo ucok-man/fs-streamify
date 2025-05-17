@@ -1,22 +1,32 @@
 package main
 
 import (
+	"sync"
+
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/ucok-man/streamify-api/internal/config"
+	"github.com/ucok-man/streamify-api/internal/logger"
 )
 
 type application struct {
 	config config.Config
+	logger *zerolog.Logger
+	wg     sync.WaitGroup
 }
 
 func main() {
 	cfg := config.New()
-	// app := &application{
-	// 	config: cfg,
-	// }
-	// if err := app.serve(); err != nil {
-	// 	slog.Error("Error running server", err)
-	// 	os.Exit(1)
-	// }
-	log.Info().CallerSkipFrame(2).Any("config", cfg).Msg("Hello From Main!")
+	applog, err := logger.New(cfg.Log.Level, cfg.Env)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed initialize logger")
+	}
+	app := &application{
+		config: cfg,
+		logger: applog,
+	}
+
+	if err := app.serve(); err != nil {
+		log.Fatal().Err(err).Msg("Failed running server")
+	}
 }

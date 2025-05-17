@@ -10,4 +10,7 @@ var configSchema = z.Struct(z.Schema{
 	"log": z.Struct(z.Schema{
 		"level": z.String().Required().OneOf([]string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}),
 	}),
+	"cors": z.Struct(z.Schema{
+		"origins": z.Slice(z.String().URL(z.Message("Each origins item must be valid url"))).Optional(),
+	}),
 })

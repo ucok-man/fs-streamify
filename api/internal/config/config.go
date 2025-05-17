@@ -19,7 +19,10 @@ type Config struct {
 	Env  string `mapstructure:"env"`
 	Log  struct {
 		Level string `mapstructure:"level"`
-	}
+	} `mapstructure:"log"`
+	Cors struct {
+		Origins []string `mapstructure:"origins"` // viper/mapstructure automatically split by comma and convert it
+	} `mapstructure:"cors"`
 }
 
 func New() Config {
@@ -42,7 +45,10 @@ func New() Config {
 
 	errmap := validator.Schema().Config.Validate(&config)
 	if errmap != nil {
-		log.Fatal().Err(errors.New("invalid or missing config")).Any("err_detail", validator.Sanitize(errmap)).Msg("Invalid or missing config")
+		log.Fatal().
+			Err(errors.New("invalid or missing config")).
+			Any("err_detail", validator.Sanitize(errmap)).
+			Msg("Invalid or missing config")
 	}
 
 	return config
