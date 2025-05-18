@@ -38,7 +38,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: applog,
-		models: models.NewModels(dbclient.Database(cfg.DB.DatabaseName)),
+		models: models.NewModels(dbclient.Database(cfg.DB.DatabaseName), applog),
 	}
 
 	if err := app.serve(); err != nil {

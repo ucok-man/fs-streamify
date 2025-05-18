@@ -8,11 +8,14 @@ import (
 
 func (app *application) routes() http.Handler {
 	r := chi.NewRouter()
+	r.NotFound(app.errNotFound)
+	r.MethodNotAllowed(app.errMethodNotAllowed)
+
 	r.Use(app.withRecover)
 	r.Use(app.withRecover)
 
 	apiv1 := chi.NewRouter()
-	apiv1.Route("/v1", func(r chi.Router) {
+	apiv1.Group(func(r chi.Router) {
 		/* -------------------------- Auth route -------------------------- */
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/signup", app.signup)

@@ -1,3 +1,3 @@
 TODO
 
-- Setup zerolog for api
+- Setup Models

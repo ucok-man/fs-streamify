@@ -1,22 +1,27 @@
 package models
 
 import (
-	"errors"
-
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 var (
-	// ErrRecordNotFound is returned when a movie record doesn't exist in database.
 	ErrRecordNotFound = errors.New("record not found")
-
-	// ErrEditConflict is returned when a there is a data race, and we have an edit conflict.
-	ErrEditConflict = errors.New("edit conflict")
+	ErrEditConflict   = errors.New("edit conflict")
+	ErrDuplicateEmail = errors.New("error duplicate email")
 )
 
 type Models struct {
+	Logger *zerolog.Logger
+	User   *UserModel
 }
 
-func NewModels(db *mongo.Database) Models {
-	return Models{}
+func NewModels(db *mongo.Database, logger *zerolog.Logger) Models {
+	return Models{
+		User: NewUserModel(
+			db.Collection("users"),
+			logger.With().Str("context", "user_model_service").Logger(),
+		),
+	}
 }

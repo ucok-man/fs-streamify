@@ -24,6 +24,9 @@ var configSchema = z.Struct(z.Schema{
 		"ApiKey":    z.String().Required(),
 		"ApiSecret": z.String().Required(),
 	}),
+	"JWT": z.Struct(z.Schema{
+		"AuthSecret": z.String().Required(),
+	}),
 
 	// "a": ,
 })

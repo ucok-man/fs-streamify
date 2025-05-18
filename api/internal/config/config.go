@@ -1,10 +1,10 @@
 package config
 
 import (
-	"errors"
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -36,6 +36,9 @@ type Config struct {
 		ApiKey    string `mapstructure:"api_key"`
 		ApiSecret string `mapstructure:"api_secret"`
 	} `mapstructure:"streamio"`
+	JWT struct {
+		AuthSecret string `mapstructure:"auth_secret"`
+	} `mapstructure:"jwt"`
 }
 
 func New() Config {
