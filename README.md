@@ -1,3 +1,4 @@
 TODO
 
-- Setup Models
+- Create user on streamio when signup
+- Login endpoint
