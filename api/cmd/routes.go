@@ -12,7 +12,7 @@ func (app *application) routes() http.Handler {
 	r.MethodNotAllowed(app.errMethodNotAllowed)
 
 	r.Use(app.withRecover)
-	r.Use(app.withRecover)
+	r.Use(app.withCORS)
 
 	apiv1 := chi.NewRouter()
 	apiv1.Group(func(r chi.Router) {
