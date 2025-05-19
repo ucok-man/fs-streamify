@@ -32,10 +32,10 @@ type Config struct {
 	Cors struct {
 		Origins []string `mapstructure:"origins"` // viper/mapstructure automatically split by comma and convert it
 	} `mapstructure:"cors"`
-	StreamIO struct {
+	GetStreamIO struct {
 		ApiKey    string `mapstructure:"api_key"`
 		ApiSecret string `mapstructure:"api_secret"`
-	} `mapstructure:"streamio"`
+	} `mapstructure:"getstreamio"`
 	JWT struct {
 		AuthSecret string `mapstructure:"auth_secret"`
 	} `mapstructure:"jwt"`

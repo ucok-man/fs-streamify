@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	stream "github.com/GetStream/stream-chat-go/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/ucok-man/streamify-api/internal/config"
@@ -19,6 +20,7 @@ type application struct {
 	config config.Config
 	logger *zerolog.Logger
 	models models.Models
+	stream *stream.Client
 	wg     sync.WaitGroup
 }
 
@@ -35,9 +37,16 @@ func main() {
 	}
 	defer dbclient.Disconnect(context.Background())
 
+	// Initialize stream chat client
+	streamChatClient, err := stream.NewClient(cfg.GetStreamIO.ApiKey, cfg.GetStreamIO.ApiSecret)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed initialize stream chat client")
+	}
+
 	app := &application{
 		config: cfg,
 		logger: applog,
+		stream: streamChatClient,
 		models: models.NewModels(dbclient.Database(cfg.DB.DatabaseName), applog),
 	}
 

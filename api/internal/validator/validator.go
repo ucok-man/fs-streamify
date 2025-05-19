@@ -8,12 +8,14 @@ import (
 type schema struct {
 	Config    *z.StructSchema
 	SignupDTO *z.StructSchema
+	SigninDTO *z.StructSchema
 }
 
 func Schema() schema {
 	return schema{
 		Config:    configSchema,
 		SignupDTO: signupDTOSchema,
+		SigninDTO: signinDTOSchema,
 	}
 }
 

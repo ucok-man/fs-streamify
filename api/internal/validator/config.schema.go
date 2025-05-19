@@ -20,7 +20,7 @@ var configSchema = z.Struct(z.Schema{
 		"MaxPoolSize":   Uint64().GT(0, z.Message("Must be positive greater than 0")).LT(100, z.Message("Must be less than 100")),
 		"MaxIdleTime":   Duration(),
 	}),
-	"StreamIO": z.Struct(z.Schema{
+	"GetStreamIO": z.Struct(z.Schema{
 		"ApiKey":    z.String().Required(),
 		"ApiSecret": z.String().Required(),
 	}),

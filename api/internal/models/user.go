@@ -59,7 +59,12 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 	var user User
 	err := m.coll.FindOne(context.Background(), filter).Decode(&user)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, mongo.ErrNoDocuments):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
 	}
 	return &user, nil
 }
