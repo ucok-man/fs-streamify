@@ -165,12 +165,11 @@ func (app *application) GenerateJwtToken(claim JWTClaim, secret string) (string,
 	return token.SignedString([]byte(secret))
 }
 
-func (app *application) DecodeJwtToken(inputToken string, claim JWTClaim, secret string) error {
+func (app *application) DecodeJwtToken(inputToken string, claim *JWTClaim, secret string) error {
 	token, err := jwt.ParseWithClaims(inputToken, claim, func(token *jwt.Token) (any, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 

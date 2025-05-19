@@ -108,9 +108,7 @@ func (app *application) signin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, models.ErrRecordNotFound):
-			app.errFailedValidation(w, r, map[string][]string{
-				"email": {"No user found for this email"},
-			})
+			app.errInvalidCredentials(w, r)
 		default:
 			app.errInternalServer(w, r, err)
 		}
@@ -123,9 +121,8 @@ func (app *application) signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !match {
-		app.errFailedValidation(w, r, map[string][]string{
-			"password": {"Incorect password for this user"},
-		})
+		app.errInvalidCredentials(w, r)
+		return
 	}
 
 	expiration := time.Now().Add(7 * 24 * time.Hour)
@@ -153,7 +150,6 @@ func (app *application) signin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
-
 }
 
 func (app *application) signout(w http.ResponseWriter, r *http.Request) {
@@ -168,6 +164,66 @@ func (app *application) signout(w http.ResponseWriter, r *http.Request) {
 		Secure:   app.config.Env == "production",
 	})
 	err := app.writeJSON(w, http.StatusOK, envelope{"message": "Session signout success!"}, nil)
+	if err != nil {
+		app.errInternalServer(w, r, err)
+	}
+}
+
+func (app *application) onboarding(w http.ResponseWriter, r *http.Request) {
+	var dto dto.OnboardingDTO
+	err := app.readJSON(w, r, &dto)
+	if err != nil {
+		app.errBadRequest(w, r, err)
+		return
+	}
+
+	errmap := validator.Schema().OnboardingDTO.Validate(&dto)
+	if errmap != nil {
+		app.errFailedValidation(w, r, validator.Sanitize(errmap))
+		return
+	}
+
+	user := app.contextGetUser(r)
+	user.Bio = dto.Bio
+	user.FullName = dto.Fullname
+	user.NativeLng = dto.NativeLng
+	user.LearningLng = dto.LearningLng
+	user.Location = dto.Location
+	user.IsOnboarded = true
+
+	user, err = app.models.User.Update(user)
+	if err != nil {
+		app.errInternalServer(w, r, err)
+		return
+	}
+
+	// Update user in getstream.io
+	_, err = app.stream.UpsertUser(context.Background(), &stream_chat.User{
+		ID:    user.ID.Hex(),
+		Name:  user.FullName,
+		Image: user.ProfilePic,
+	})
+	if err != nil {
+		app.errInternalServer(w, r, err)
+		return
+	}
+
+	var userResponse response.OnboardingResponse
+	copier.Copy(&userResponse, user)
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"user": userResponse}, nil)
+	if err != nil {
+		app.errInternalServer(w, r, err)
+	}
+}
+
+func (app *application) whoami(w http.ResponseWriter, r *http.Request) {
+	user := app.contextGetUser(r)
+
+	var userResponse response.WhoAmIResponse
+	copier.Copy(&userResponse, user)
+
+	err := app.writeJSON(w, http.StatusOK, envelope{"user": userResponse}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}

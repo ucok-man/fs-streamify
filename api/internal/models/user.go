@@ -69,6 +69,30 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
+func (m *UserModel) GetById(id string) (*User, error) {
+	idbson, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{{
+		Key:   "_id",
+		Value: idbson,
+	}}
+
+	var user User
+	err = m.coll.FindOne(context.Background(), filter).Decode(&user)
+	if err != nil {
+		switch {
+		case errors.Is(err, mongo.ErrNoDocuments):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &user, nil
+}
+
 func (m *UserModel) Insert(user *User) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -93,5 +117,32 @@ func (m *UserModel) Insert(user *User) (*User, error) {
 	}
 
 	user.ID = userID
+	return user, nil
+}
+
+func (m *UserModel) Update(user *User) (*User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	current := time.Now()
+	user.UpdatedAt = current
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{{"full_name", user.FullName}}},
+		{Key: "$set", Value: bson.D{{"bio", user.Bio}}},
+		{Key: "$set", Value: bson.D{{"profile_pic", user.ProfilePic}}},
+		{Key: "$set", Value: bson.D{{"native_lng", user.NativeLng}}},
+		{Key: "$set", Value: bson.D{{"learning_lng", user.LearningLng}}},
+		{Key: "$set", Value: bson.D{{"location", user.Location}}},
+		{Key: "$set", Value: bson.D{{"is_onboarded", user.IsOnboarded}}},
+		{Key: "$set", Value: bson.D{{"updated_at", user.UpdatedAt}}},
+		{Key: "$set", Value: bson.D{{"friend_ids", user.FriendIDs}}},
+	}
+
+	_, err := m.coll.UpdateByID(ctx, user.ID, update)
+	if err != nil {
+		return nil, err
+	}
+
 	return user, nil
 }

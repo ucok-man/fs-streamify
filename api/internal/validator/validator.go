@@ -6,16 +6,18 @@ import (
 )
 
 type schema struct {
-	Config    *z.StructSchema
-	SignupDTO *z.StructSchema
-	SigninDTO *z.StructSchema
+	Config        *z.StructSchema
+	SignupDTO     *z.StructSchema
+	SigninDTO     *z.StructSchema
+	OnboardingDTO *z.StructSchema
 }
 
 func Schema() schema {
 	return schema{
-		Config:    configSchema,
-		SignupDTO: signupDTOSchema,
-		SigninDTO: signinDTOSchema,
+		Config:        configSchema,
+		SignupDTO:     signupDTOSchema,
+		SigninDTO:     signinDTOSchema,
+		OnboardingDTO: onboardingDTOSchema,
 	}
 }
 

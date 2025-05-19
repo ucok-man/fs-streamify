@@ -21,6 +21,8 @@ func (app *application) routes() http.Handler {
 			r.Post("/signup", app.signup)
 			r.Post("/signin", app.signin)
 			r.Post("/signout", app.signout)
+			r.With(app.withAuthentication).Post("/onboarding", app.onboarding)
+			r.With(app.withAuthentication).Post("/me", app.whoami)
 		})
 	})
 
