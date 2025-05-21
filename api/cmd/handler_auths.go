@@ -81,10 +81,10 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 		Secure:   app.config.Env == "production",
 	})
 
-	var userResponse response.SignupResponse
-	copier.Copy(&userResponse, user)
+	var payload response.UserResponse
+	copier.Copy(&payload, user)
 
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": userResponse}, nil)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"user": payload}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -143,10 +143,10 @@ func (app *application) signin(w http.ResponseWriter, r *http.Request) {
 		Secure:   app.config.Env == "production",
 	})
 
-	var userResponse response.SigninResponse
-	copier.Copy(&userResponse, user)
+	var payload response.UserResponse
+	copier.Copy(&payload, user)
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"user": userResponse}, nil)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"user": payload}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -208,10 +208,10 @@ func (app *application) onboarding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userResponse response.OnboardingResponse
-	copier.Copy(&userResponse, user)
+	var payload response.UserResponse
+	copier.Copy(&payload, user)
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"user": userResponse}, nil)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"user": payload}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -220,10 +220,10 @@ func (app *application) onboarding(w http.ResponseWriter, r *http.Request) {
 func (app *application) whoami(w http.ResponseWriter, r *http.Request) {
 	user := app.contextGetUser(r)
 
-	var userResponse response.WhoAmIResponse
-	copier.Copy(&userResponse, user)
+	var payload response.UserResponse
+	copier.Copy(&payload, user)
 
-	err := app.writeJSON(w, http.StatusOK, envelope{"user": userResponse}, nil)
+	err := app.writeJSON(w, http.StatusCreated, envelope{"user": payload}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}

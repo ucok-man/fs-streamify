@@ -13,8 +13,9 @@ var (
 )
 
 type Models struct {
-	Logger *zerolog.Logger
-	User   *UserModel
+	Logger        *zerolog.Logger
+	User          *UserModel
+	FriendRequest *FriendRequestModel
 }
 
 func NewModels(db *mongo.Database, logger *zerolog.Logger) Models {
@@ -22,6 +23,11 @@ func NewModels(db *mongo.Database, logger *zerolog.Logger) Models {
 		User: NewUserModel(
 			db.Collection("users"),
 			logger.With().Str("context", "user_model_service").Logger(),
+		),
+
+		FriendRequest: NewFriendRequestModel(
+			db.Collection("friend_request"),
+			logger.With().Str("context", "friend_request_model_service").Logger(),
 		),
 	}
 }

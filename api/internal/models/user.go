@@ -33,16 +33,29 @@ type UserModel struct {
 }
 
 func NewUserModel(coll *mongo.Collection, logger zerolog.Logger) *UserModel {
+	/* ------------------------- unique email ------------------------- */
 	uniqeEmailIdx := mongo.IndexModel{
 		Keys:    bson.D{{Key: "email", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	}
 
-	idxname, err := coll.Indexes().CreateOne(context.TODO(), uniqeEmailIdx)
+	name, err := coll.Indexes().CreateOne(context.TODO(), uniqeEmailIdx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Error creating unique email index")
 	}
-	logger.Info().Str("index_name", idxname).Msg("Success creating index")
+	logger.Info().Str("index_name", name).Msg("Success creating index")
+
+	/* ------------------ text search index fullname ------------------ */
+	name, err = coll.SearchIndexes().CreateOne(context.Background(), mongo.SearchIndexModel{
+		Options: options.SearchIndexes().SetName("user_full_name_index"),
+		Definition: bson.D{{Key: "mappings", Value: bson.D{
+			{Key: "dynamic", Value: true},
+		}}},
+	})
+	if err != nil {
+		panic(err)
+	}
+	logger.Info().Str("index_name", name).Msg("Success creating index")
 
 	return &UserModel{
 		coll:   coll,
@@ -56,8 +69,11 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 		Value: email,
 	}}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	var user User
-	err := m.coll.FindOne(context.Background(), filter).Decode(&user)
+	err := m.coll.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		switch {
 		case errors.Is(err, mongo.ErrNoDocuments):
@@ -69,19 +85,17 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-func (m *UserModel) GetById(id string) (*User, error) {
-	idbson, err := bson.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
-	}
-
+func (m *UserModel) GetById(id bson.ObjectID) (*User, error) {
 	filter := bson.D{{
 		Key:   "_id",
-		Value: idbson,
+		Value: id,
 	}}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	var user User
-	err = m.coll.FindOne(context.Background(), filter).Decode(&user)
+	err := m.coll.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		switch {
 		case errors.Is(err, mongo.ErrNoDocuments):
@@ -94,12 +108,12 @@ func (m *UserModel) GetById(id string) (*User, error) {
 }
 
 func (m *UserModel) Insert(user *User) (*User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	current := time.Now()
 	user.CreatedAt = current
 	user.UpdatedAt = current
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
 	result, err := m.coll.InsertOne(ctx, user)
 	if err != nil {
@@ -121,11 +135,11 @@ func (m *UserModel) Insert(user *User) (*User, error) {
 }
 
 func (m *UserModel) Update(user *User) (*User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	current := time.Now()
 	user.UpdatedAt = current
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
 	update := bson.D{
 		{Key: "$set", Value: bson.D{{"full_name", user.FullName}}},
@@ -145,4 +159,65 @@ func (m *UserModel) Update(user *User) (*User, error) {
 	}
 
 	return user, nil
+}
+
+// TODO: Implement search and pagination
+func (m *UserModel) Recommended(currentUser *User) ([]*User, error) {
+	filter := bson.D{{"$and", bson.A{
+		bson.D{{"_id", bson.D{{"$ne", currentUser.ID}}}},
+		bson.D{{"_id", bson.D{{"$nin", currentUser.FriendIDs}}}},
+		bson.D{{"isOnboaded", true}},
+	}}}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	cursor, err := m.coll.Find(ctx, filter, options.Find())
+	if err != nil {
+		return nil, err
+	}
+
+	var users []*User
+	if err = cursor.All(context.Background(), &users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+// TODO: Implement search and pagination
+func (m *UserModel) MyFriends(currentUser *User) ([]*User, error) {
+	filter := bson.D{{"$and", bson.A{
+		bson.D{{"_id", bson.D{{"$in", currentUser.FriendIDs}}}},
+		bson.D{{"isOnboaded", true}},
+	}}}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	cursor, err := m.coll.Find(ctx, filter, options.Find())
+	if err != nil {
+		return nil, err
+	}
+
+	var users []*User
+	if err = cursor.All(context.Background(), &users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (m *UserModel) AddFriends(id bson.ObjectID, friendId bson.ObjectID) error {
+	filter := bson.D{{"_id", id}}
+	update := bson.D{{"$push", bson.D{{"friend_ids", friendId}}}}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := m.coll.UpdateOne(ctx, filter, update, options.UpdateOne())
+	if err != nil {
+		return err
+	}
+	return nil
 }

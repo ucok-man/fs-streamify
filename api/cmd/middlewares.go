@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/ucok-man/streamify-api/internal/models"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func (app *application) withRecover(next http.Handler) http.Handler {
@@ -39,7 +40,13 @@ func (app *application) withAuthentication(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := app.models.User.GetById(claim.UserID)
+		uid, err := bson.ObjectIDFromHex(claim.ID)
+		if err != nil {
+			app.errInvalidAuthenticationToken(w, r)
+			return
+		}
+
+		user, err := app.models.User.GetById(uid)
 		if err != nil {
 			switch {
 			case errors.Is(err, models.ErrRecordNotFound):
