@@ -37,6 +37,11 @@ func (app *application) routes() http.Handler {
 				r.Get("/send", app.getAllSendFriendRequest)
 			})
 		})
+
+		r.Route("/chat", func(r chi.Router) {
+			r.Use(app.withAuthentication)
+			r.Get("/token", app.getStreamToken)
+		})
 	})
 
 	r.Mount("/api/v1", apiv1)

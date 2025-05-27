@@ -140,9 +140,7 @@ type GetAllFromFriendRequestParam struct {
 	SearchSender  string
 }
 
-func (m *FriendRequestModel) GetAllFromFriendRequest(param GetAllFromFriendRequestParam) ([]*FriendRequestWithSender, error) {
-	pipeline := mongo.Pipeline{}
-
+func (m *FriendRequestModel) GetAllFromFriendRequest(param GetAllFromFriendRequestParam) ([]*FriendRequestWithSender, Metadata, error) {
 	// Step 1: Match by recipient_id and status
 	matchStage := bson.D{
 		{Key: "$match", Value: bson.M{
@@ -152,7 +150,6 @@ func (m *FriendRequestModel) GetAllFromFriendRequest(param GetAllFromFriendReque
 	if param.Status != "All" {
 		matchStage[0].Value.(bson.M)["status"] = FriendRequestStatus(param.Status)
 	}
-	pipeline = append(pipeline, matchStage)
 
 	// Step 2: Lookup sender user data
 	lookupStage := bson.D{{Key: "$lookup", Value: bson.M{
@@ -161,49 +158,83 @@ func (m *FriendRequestModel) GetAllFromFriendRequest(param GetAllFromFriendReque
 		"foreignField": "_id",
 		"as":           "sender",
 	}}}
-	pipeline = append(pipeline, lookupStage)
 
 	// Step 3: Unwind sender array
 	unwindStage := bson.D{{Key: "$unwind", Value: bson.M{
 		"path":                       "$sender",
 		"preserveNullAndEmptyArrays": false,
 	}}}
-	pipeline = append(pipeline, unwindStage)
 
 	// Step 4: Optional search by sender.full_name using Atlas Search
+	var searchStage bson.D
 	if param.SearchSender != "" {
-		searchStage := bson.D{{Key: "$search", Value: bson.M{
+		searchStage = bson.D{{Key: "$search", Value: bson.M{
 			"index": "user_full_name_index", // dynamic index
 			"text": bson.M{
 				"query": param.SearchSender,
 				"path":  "sender.full_name",
 			},
 		}}}
-		pipeline = append(pipeline, searchStage)
 	}
 
 	// Step 5–6: Pagination
 	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
 	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
 
-	pipeline = append(pipeline, skipStage, limitStage)
+	// $facet untuk split antara hasil dan count
+	resultsPipeline := mongo.Pipeline{}
+	if searchStage != nil {
+		resultsPipeline = append(resultsPipeline, searchStage)
+	}
+	resultsPipeline = append(resultsPipeline, skipStage, limitStage)
 
-	// Execute pipeline
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	countPipeline := mongo.Pipeline{}
+	if searchStage != nil {
+		countPipeline = append(countPipeline, searchStage)
+	}
+	countPipeline = append(countPipeline, bson.D{{Key: "$count", Value: "total"}})
+
+	facetStage := bson.D{{Key: "$facet", Value: bson.M{
+		"data":  resultsPipeline,
+		"count": countPipeline,
+	}}}
+
+	pipeline := mongo.Pipeline{matchStage, lookupStage, unwindStage, facetStage}
+
+	// Execute
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	cursor, err := m.coll.Aggregate(ctx, pipeline)
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 	defer cursor.Close(ctx)
 
-	var results []*FriendRequestWithSender
-	if err = cursor.All(ctx, &results); err != nil {
-		return nil, err
+	var rawResult []struct {
+		Data  []*FriendRequestWithSender `bson:"data"`
+		Count []struct {
+			Total int64 `bson:"total"`
+		} `bson:"count"`
 	}
 
-	return results, nil
+	if err := cursor.All(ctx, &rawResult); err != nil {
+		return nil, Metadata{}, err
+	}
+
+	if len(rawResult) <= 0 {
+		return nil, Metadata{}, err
+	}
+	result := rawResult[0]
+
+	var totalCount int64
+	if len(result.Count) > 0 {
+		totalCount = result.Count[0].Total
+	}
+
+	metadata := calculateMetadata(totalCount, param.Page, param.PageSize)
+
+	return result.Data, metadata, nil
 }
 
 type GetAllSendFriendRequestParam struct {
@@ -214,9 +245,7 @@ type GetAllSendFriendRequestParam struct {
 	SearchRecipient string
 }
 
-func (m *FriendRequestModel) GetAllSendFriendRequest(param GetAllSendFriendRequestParam) ([]*FriendRequestWithRecipient, error) {
-	pipeline := mongo.Pipeline{}
-
+func (m *FriendRequestModel) GetAllSendFriendRequest(param GetAllSendFriendRequestParam) ([]*FriendRequestWithRecipient, Metadata, error) {
 	// Step 1: Match by sender_id and status
 	matchStage := bson.D{
 		{Key: "$match", Value: bson.M{
@@ -226,62 +255,89 @@ func (m *FriendRequestModel) GetAllSendFriendRequest(param GetAllSendFriendReque
 	if param.Status != "All" {
 		matchStage[0].Value.(bson.M)["status"] = FriendRequestStatus(param.Status)
 	}
-	pipeline = append(pipeline, matchStage)
 
-	// Step 2: Lookup recipient user data
+	// Step 2: Lookup recipient
 	lookupStage := bson.D{{Key: "$lookup", Value: bson.M{
 		"from":         "users",
 		"localField":   "recipient_id",
 		"foreignField": "_id",
 		"as":           "recipient",
 	}}}
-	pipeline = append(pipeline, lookupStage)
 
-	// Step 3: Unwind recipient array
+	// Step 3: Unwind recipient
 	unwindStage := bson.D{{Key: "$unwind", Value: bson.M{
 		"path":                       "$recipient",
 		"preserveNullAndEmptyArrays": false,
 	}}}
-	pipeline = append(pipeline, unwindStage)
 
-	// Step 4: Optional search by recipient.full_name using Atlas Search
+	// Step 4: Optional search
+	var searchStage bson.D
 	if param.SearchRecipient != "" {
-		searchStage := bson.D{{Key: "$search", Value: bson.M{
+		searchStage = bson.D{{Key: "$search", Value: bson.M{
 			"index": "user_full_name_index",
 			"text": bson.M{
 				"query": param.SearchRecipient,
 				"path":  "recipient.full_name",
 			},
 		}}}
-		pipeline = append(pipeline, searchStage)
 	}
 
-	// Step 5–6: Pagination
-	if param.Page <= 0 {
-		param.Page = 1
-	}
-	if param.PageSize <= 0 {
-		param.PageSize = 10
-	}
+	// Pagination
 	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
 	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
 
-	pipeline = append(pipeline, skipStage, limitStage)
+	// $facet untuk split antara hasil dan count
+	resultsPipeline := mongo.Pipeline{}
+	if searchStage != nil {
+		resultsPipeline = append(resultsPipeline, searchStage)
+	}
+	resultsPipeline = append(resultsPipeline, skipStage, limitStage)
 
-	// Execute pipeline
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	countPipeline := mongo.Pipeline{}
+	if searchStage != nil {
+		countPipeline = append(countPipeline, searchStage)
+	}
+	countPipeline = append(countPipeline, bson.D{{Key: "$count", Value: "total"}})
+
+	facetStage := bson.D{{Key: "$facet", Value: bson.M{
+		"data":  resultsPipeline,
+		"count": countPipeline,
+	}}}
+
+	pipeline := mongo.Pipeline{matchStage, lookupStage, unwindStage, facetStage}
+
+	// Execute
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	cursor, err := m.coll.Aggregate(ctx, pipeline)
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 	defer cursor.Close(ctx)
 
-	var results []*FriendRequestWithRecipient
-	if err = cursor.All(ctx, &results); err != nil {
-		return nil, err
+	var rawResult []struct {
+		Data  []*FriendRequestWithRecipient `bson:"data"`
+		Count []struct {
+			Total int64 `bson:"total"`
+		} `bson:"count"`
 	}
 
-	return results, nil
+	if err := cursor.All(ctx, &rawResult); err != nil {
+		return nil, Metadata{}, err
+	}
+
+	if len(rawResult) <= 0 {
+		return nil, Metadata{}, err
+	}
+	result := rawResult[0]
+
+	var totalCount int64
+	if len(result.Count) > 0 {
+		totalCount = result.Count[0].Total
+	}
+
+	metadata := calculateMetadata(totalCount, param.Page, param.PageSize)
+
+	return result.Data, metadata, nil
 }

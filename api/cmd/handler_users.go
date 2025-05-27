@@ -237,7 +237,7 @@ func (app *application) getAllFromFriendRequest(w http.ResponseWriter, r *http.R
 		app.errInternalServer(w, r, err)
 	}
 
-	var payload response.FriendRequestWithSender
+	var payload response.FriendRequestWithSenderResponse
 	copier.Copy(&payload, &users)
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": payload}, nil)
@@ -281,7 +281,7 @@ func (app *application) getAllSendFriendRequest(w http.ResponseWriter, r *http.R
 		app.errInternalServer(w, r, err)
 	}
 
-	var payload response.FriendRequestWithRecipient
+	var payload response.FriendRequestWithRecipientResponse
 	copier.Copy(&payload, &users)
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": payload}, nil)

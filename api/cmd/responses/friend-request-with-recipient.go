@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type FriendRequestWithRecipient struct {
+type FriendRequestWithRecipientResponse struct {
 	ID          bson.ObjectID `bson:"id"`
 	SenderID    bson.ObjectID `bson:"sender_id"`
 	RecipientID bson.ObjectID `bson:"recipient_id"`
