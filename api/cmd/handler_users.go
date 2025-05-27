@@ -7,9 +7,7 @@ import (
 	"slices"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jinzhu/copier"
 	dto "github.com/ucok-man/streamify-api/cmd/dtos"
-	response "github.com/ucok-man/streamify-api/cmd/responses"
 	"github.com/ucok-man/streamify-api/internal/models"
 	"github.com/ucok-man/streamify-api/internal/validator"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -37,7 +35,7 @@ func (app *application) recommended(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := app.contextGetUser(r)
-	users, err := app.models.User.Recommended(models.RecommendedUserParam{
+	users, metadata, err := app.models.User.Recommended(models.RecommendedUserParam{
 		CurrentUser: currentUser,
 		Page:        int64(dto.Page),
 		PageSize:    int64(dto.PageSize),
@@ -46,10 +44,7 @@ func (app *application) recommended(w http.ResponseWriter, r *http.Request) {
 		app.errInternalServer(w, r, err)
 	}
 
-	var payload response.UsersResponse
-	copier.Copy(&payload, &users)
-
-	err = app.writeJSON(w, http.StatusOK, envelope{"users": payload}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"users": users, "metadata": metadata}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -78,7 +73,7 @@ func (app *application) myfriend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := app.contextGetUser(r)
-	users, err := app.models.User.MyFriends(models.MyFriendsParam{
+	users, metadata, err := app.models.User.MyFriends(models.MyFriendsParam{
 		CurrentUser: currentUser,
 		Search:      dto.Search,
 		Page:        int64(dto.Page),
@@ -88,10 +83,7 @@ func (app *application) myfriend(w http.ResponseWriter, r *http.Request) {
 		app.errInternalServer(w, r, err)
 	}
 
-	var payload response.UsersResponse
-	copier.Copy(&payload, &users)
-
-	err = app.writeJSON(w, http.StatusOK, envelope{"users": payload}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"users": users, "metadata": metadata}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -140,10 +132,7 @@ func (app *application) requestFriend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload response.FriendRequestResponse
-	copier.Copy(&payload, &friendRequest)
-
-	err = app.writeJSON(w, http.StatusCreated, envelope{"friend_request": payload}, nil)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"friend_request": friendRequest}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -193,10 +182,7 @@ func (app *application) acceptFriend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload response.FriendRequestResponse
-	copier.Copy(&payload, &friendRequest)
-
-	err = app.writeJSON(w, http.StatusOK, envelope{"friend_request": payload}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"friend_request": friendRequest}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -226,7 +212,7 @@ func (app *application) getAllFromFriendRequest(w http.ResponseWriter, r *http.R
 	}
 
 	currentUser := app.contextGetUser(r)
-	users, err := app.models.FriendRequest.GetAllFromFriendRequest(models.GetAllFromFriendRequestParam{
+	friendRequests, metadata, err := app.models.FriendRequest.GetAllFromFriendRequest(models.GetAllFromFriendRequestParam{
 		CurrentUserId: currentUser.ID,
 		Status:        dto.Status,
 		Page:          int64(dto.Page),
@@ -237,10 +223,7 @@ func (app *application) getAllFromFriendRequest(w http.ResponseWriter, r *http.R
 		app.errInternalServer(w, r, err)
 	}
 
-	var payload response.FriendRequestWithSenderResponse
-	copier.Copy(&payload, &users)
-
-	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": payload}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": friendRequests, "metadata": metadata}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -270,7 +253,7 @@ func (app *application) getAllSendFriendRequest(w http.ResponseWriter, r *http.R
 	}
 
 	currentUser := app.contextGetUser(r)
-	users, err := app.models.FriendRequest.GetAllSendFriendRequest(models.GetAllSendFriendRequestParam{
+	friendRequests, metadata, err := app.models.FriendRequest.GetAllSendFriendRequest(models.GetAllSendFriendRequestParam{
 		CurrentUserId:   currentUser.ID,
 		Status:          dto.Status,
 		Page:            int64(dto.Page),
@@ -281,10 +264,7 @@ func (app *application) getAllSendFriendRequest(w http.ResponseWriter, r *http.R
 		app.errInternalServer(w, r, err)
 	}
 
-	var payload response.FriendRequestWithRecipientResponse
-	copier.Copy(&payload, &users)
-
-	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": payload}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": friendRequests, "metadata": metadata}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}

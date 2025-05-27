@@ -18,7 +18,7 @@ const (
 )
 
 type FriendRequest struct {
-	ID          bson.ObjectID       `bson:"_id,omitempty"`
+	ID          bson.ObjectID       `bson:"_id,omitempty" json:"id"`
 	SenderID    bson.ObjectID       `bson:"sender_id"`
 	RecipientID bson.ObjectID       `bson:"recipient_id"`
 	Status      FriendRequestStatus `bson:"status"`

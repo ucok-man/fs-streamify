@@ -12,16 +12,16 @@ import (
 )
 
 type User struct {
-	ID          bson.ObjectID   `bson:"_id,omitempty"`
+	ID          bson.ObjectID   `bson:"_id,omitempty" json:"id"`
 	FullName    string          `bson:"full_name"`
 	Email       string          `bson:"email"`
-	Password    password        `bson:"inline"`
+	Password    password        `bson:"inline" json:"-"`
 	Bio         string          `bson:"bio"`
 	ProfilePic  string          `bson:"profile_pic"`
 	NativeLng   string          `bson:"native_lng"`
 	LearningLng string          `bson:"learning_lng"`
 	Location    string          `bson:"location"`
-	IsOnboarded bool            `bson:"is_onboarded"` // TODO:default false
+	IsOnboarded bool            `bson:"is_onboarded"`
 	FriendIDs   []bson.ObjectID `bson:"friend_ids"`
 	CreatedAt   time.Time       `bson:"created_at"`
 	UpdatedAt   time.Time       `bson:"updated_at"`

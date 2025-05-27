@@ -3,11 +3,11 @@ package models
 import "math"
 
 type Metadata struct {
-	CurrentPage  int64 `json:"current_page,omitempty"`
-	PageSize     int64 `json:"page_size,omitempty"`
-	FirstPage    int64 `json:"first_page,omitempty"`
-	LastPage     int64 `json:"last_page,omitempty"`
-	TotalRecords int64 `json:"total_records,omitempty"`
+	CurrentPage  int64 `json:"current_page"`
+	PageSize     int64 `json:"page_size"`
+	FirstPage    int64 `json:"first_page"`
+	LastPage     int64 `json:"last_page"`
+	TotalRecords int64 `json:"total_records"`
 }
 
 func calculateMetadata(totalRecords, page, pageSize int64) Metadata {

@@ -7,9 +7,7 @@ import (
 	"time"
 
 	stream_chat "github.com/GetStream/stream-chat-go/v5"
-	"github.com/jinzhu/copier"
 	dto "github.com/ucok-man/streamify-api/cmd/dtos"
-	response "github.com/ucok-man/streamify-api/cmd/responses"
 	"github.com/ucok-man/streamify-api/internal/models"
 	"github.com/ucok-man/streamify-api/internal/validator"
 )
@@ -81,10 +79,7 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 		Secure:   app.config.Env == "production",
 	})
 
-	var payload response.UserResponse
-	copier.Copy(&payload, user)
-
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": payload}, nil)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -143,10 +138,7 @@ func (app *application) signin(w http.ResponseWriter, r *http.Request) {
 		Secure:   app.config.Env == "production",
 	})
 
-	var payload response.UserResponse
-	copier.Copy(&payload, user)
-
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": payload}, nil)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -208,10 +200,7 @@ func (app *application) onboarding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload response.UserResponse
-	copier.Copy(&payload, user)
-
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": payload}, nil)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -219,11 +208,7 @@ func (app *application) onboarding(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) whoami(w http.ResponseWriter, r *http.Request) {
 	user := app.contextGetUser(r)
-
-	var payload response.UserResponse
-	copier.Copy(&payload, user)
-
-	err := app.writeJSON(w, http.StatusCreated, envelope{"user": payload}, nil)
+	err := app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
