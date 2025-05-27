@@ -161,47 +161,95 @@ func (m *UserModel) Update(user *User) (*User, error) {
 	return user, nil
 }
 
-// TODO: Implement search and pagination
-func (m *UserModel) Recommended(currentUser *User) ([]*User, error) {
-	filter := bson.D{{"$and", bson.A{
-		bson.D{{"_id", bson.D{{"$ne", currentUser.ID}}}},
-		bson.D{{"_id", bson.D{{"$nin", currentUser.FriendIDs}}}},
+type RecommendedUserParam struct {
+	CurrentUser *User
+	Page        int64
+	PageSize    int64
+}
+
+func (m *UserModel) Recommended(param RecommendedUserParam) ([]*User, error) {
+	// Validasi nilai Page dan PageSize
+	if param.Page <= 0 {
+		param.Page = 1
+	}
+	if param.PageSize <= 0 {
+		param.PageSize = 10
+	}
+
+	filter := bson.D{{Key: "$and", Value: bson.A{
+		bson.D{{"_id", bson.D{{"$ne", param.CurrentUser.ID}}}},
+		bson.D{{"_id", bson.D{{"$nin", param.CurrentUser.FriendIDs}}}},
 		bson.D{{"isOnboaded", true}},
 	}}}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	cursor, err := m.coll.Find(ctx, filter, options.Find())
+	findOptions := options.Find()
+	findOptions.SetSkip((param.Page - 1) * param.PageSize)
+	findOptions.SetLimit(param.PageSize)
+
+	cursor, err := m.coll.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(ctx)
 
 	var users []*User
-	if err = cursor.All(context.Background(), &users); err != nil {
+	if err = cursor.All(ctx, &users); err != nil {
 		return nil, err
 	}
 
 	return users, nil
 }
 
-// TODO: Implement search and pagination
-func (m *UserModel) MyFriends(currentUser *User) ([]*User, error) {
-	filter := bson.D{{"$and", bson.A{
-		bson.D{{"_id", bson.D{{"$in", currentUser.FriendIDs}}}},
-		bson.D{{"isOnboaded", true}},
-	}}}
+type MyFriendsParam struct {
+	CurrentUser *User
+	Search      string
+	Page        int64
+	PageSize    int64
+}
 
+func (m *UserModel) MyFriends(param MyFriendsParam) ([]*User, error) {
+	pipeline := mongo.Pipeline{}
+
+	// Step 1: Match hanya user yang merupakan teman dan sudah onboarded
+	matchStage := bson.D{{Key: "$match", Value: bson.M{
+		"_id":        bson.M{"$in": param.CurrentUser.FriendIDs},
+		"isOnboaded": true,
+	}}}
+	pipeline = append(pipeline, matchStage)
+
+	// Step 2: Optional search by full_name using Atlas Search
+	if param.Search != "" {
+		searchStage := bson.D{{Key: "$search", Value: bson.M{
+			"index": "user_full_name_index",
+			"text": bson.M{
+				"query": param.Search,
+				"path":  "full_name",
+			},
+		}}}
+		pipeline = append(pipeline, searchStage)
+	}
+
+	// Step 3: Pagination
+	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
+	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
+
+	pipeline = append(pipeline, skipStage, limitStage)
+
+	// Execute pipeline
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	cursor, err := m.coll.Find(ctx, filter, options.Find())
+	cursor, err := m.coll.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(ctx)
 
 	var users []*User
-	if err = cursor.All(context.Background(), &users); err != nil {
+	if err = cursor.All(ctx, &users); err != nil {
 		return nil, err
 	}
 

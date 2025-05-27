@@ -26,13 +26,11 @@ func (app *application) routes() http.Handler {
 		})
 		r.Route("/users", func(r chi.Router) {
 			r.Use(app.withAuthentication)
+
 			r.Get("/recommended", app.recommended)
+			r.Get("/friends-with-me", app.myfriend)
 
-			r.Route("/friends", func(r chi.Router) {
-				r.Get("/me", app.myfriend)
-			})
-
-			r.Route("/friends/request", func(r chi.Router) {
+			r.Route("/friends-request", func(r chi.Router) {
 				r.Post("/create/{recipientId}", app.requestFriend)
 				r.Post("/accept/{friendRequestId}", app.acceptFriend)
 				r.Get("/from", app.getAllFromFriendRequest)

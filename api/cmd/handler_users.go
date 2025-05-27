@@ -8,14 +8,40 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jinzhu/copier"
+	dto "github.com/ucok-man/streamify-api/cmd/dtos"
 	response "github.com/ucok-man/streamify-api/cmd/responses"
 	"github.com/ucok-man/streamify-api/internal/models"
+	"github.com/ucok-man/streamify-api/internal/validator"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func (app *application) recommended(w http.ResponseWriter, r *http.Request) {
+	var dto dto.RecommendedUserDTO
+	var err error
+
+	dto.Page, err = app.queryInt(r.URL.Query(), "page", 1)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("page, %v", err))
+		return
+	}
+	dto.PageSize, err = app.queryInt(r.URL.Query(), "page_size", 10)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("page_size, %v", err))
+		return
+	}
+
+	errmap := validator.Schema().RecommendedUser.Validate(&dto)
+	if errmap != nil {
+		app.errFailedValidation(w, r, validator.Sanitize(errmap))
+		return
+	}
+
 	currentUser := app.contextGetUser(r)
-	users, err := app.models.User.Recommended(currentUser)
+	users, err := app.models.User.Recommended(models.RecommendedUserParam{
+		CurrentUser: currentUser,
+		Page:        int64(dto.Page),
+		PageSize:    int64(dto.PageSize),
+	})
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -30,8 +56,34 @@ func (app *application) recommended(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) myfriend(w http.ResponseWriter, r *http.Request) {
+	var dto dto.MyFriendsDTO
+	var err error
+
+	dto.Page, err = app.queryInt(r.URL.Query(), "page", 1)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("page, %v", err))
+		return
+	}
+	dto.PageSize, err = app.queryInt(r.URL.Query(), "page_size", 10)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("page_size, %v", err))
+		return
+	}
+	dto.Search = app.queryString(r.URL.Query(), "search", "")
+
+	errmap := validator.Schema().MyFriendsSchema.Validate(&dto)
+	if errmap != nil {
+		app.errFailedValidation(w, r, validator.Sanitize(errmap))
+		return
+	}
+
 	currentUser := app.contextGetUser(r)
-	users, err := app.models.User.MyFriends(currentUser)
+	users, err := app.models.User.MyFriends(models.MyFriendsParam{
+		CurrentUser: currentUser,
+		Search:      dto.Search,
+		Page:        int64(dto.Page),
+		PageSize:    int64(dto.PageSize),
+	})
 	if err != nil {
 		app.errInternalServer(w, r, err)
 	}
@@ -151,10 +203,89 @@ func (app *application) acceptFriend(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) getAllFromFriendRequest(w http.ResponseWriter, r *http.Request) {
-	// currentUser := app.contextGetUser(r)
+	var dto dto.GetAllFromFriendRequestDTO
+	var err error
 
-	// app.models.FriendRequest.GetAllFromFriendRequest()
+	dto.Page, err = app.queryInt(r.URL.Query(), "page", 1)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("page, %v", err))
+		return
+	}
+	dto.PageSize, err = app.queryInt(r.URL.Query(), "page_size", 10)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("page_size, %v", err))
+		return
+	}
+	dto.SearchSender = app.queryString(r.URL.Query(), "search_sender", "")
+	dto.Status = app.queryString(r.URL.Query(), "status", "All")
+
+	errmap := validator.Schema().GetAllFromFriendRequest.Validate(&dto)
+	if errmap != nil {
+		app.errFailedValidation(w, r, validator.Sanitize(errmap))
+		return
+	}
+
+	currentUser := app.contextGetUser(r)
+	users, err := app.models.FriendRequest.GetAllFromFriendRequest(models.GetAllFromFriendRequestParam{
+		CurrentUserId: currentUser.ID,
+		Status:        dto.Status,
+		Page:          int64(dto.Page),
+		PageSize:      int64(dto.PageSize),
+		SearchSender:  dto.SearchSender,
+	})
+	if err != nil {
+		app.errInternalServer(w, r, err)
+	}
+
+	var payload response.FriendRequestWithSender
+	copier.Copy(&payload, &users)
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": payload}, nil)
+	if err != nil {
+		app.errInternalServer(w, r, err)
+	}
 }
 
 func (app *application) getAllSendFriendRequest(w http.ResponseWriter, r *http.Request) {
+	var dto dto.GetAllSendFriendRequestDTO
+	var err error
+
+	dto.Page, err = app.queryInt(r.URL.Query(), "page", 1)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("page, %v", err))
+		return
+	}
+	dto.PageSize, err = app.queryInt(r.URL.Query(), "page_size", 10)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("page_size, %v", err))
+		return
+	}
+	dto.SearchRecipient = app.queryString(r.URL.Query(), "search_recipient", "")
+	dto.Status = app.queryString(r.URL.Query(), "status", "All")
+
+	errmap := validator.Schema().GetAllFromFriendRequest.Validate(&dto)
+	if errmap != nil {
+		app.errFailedValidation(w, r, validator.Sanitize(errmap))
+		return
+	}
+
+	currentUser := app.contextGetUser(r)
+	users, err := app.models.FriendRequest.GetAllSendFriendRequest(models.GetAllSendFriendRequestParam{
+		CurrentUserId:   currentUser.ID,
+		Status:          dto.Status,
+		Page:            int64(dto.Page),
+		PageSize:        int64(dto.PageSize),
+		SearchRecipient: dto.SearchRecipient,
+	})
+	if err != nil {
+		app.errInternalServer(w, r, err)
+	}
+
+	var payload response.FriendRequestWithRecipient
+	copier.Copy(&payload, &users)
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": payload}, nil)
+	if err != nil {
+		app.errInternalServer(w, r, err)
+	}
 }

@@ -141,51 +141,68 @@ type GetAllFromFriendRequestParam struct {
 }
 
 func (m *FriendRequestModel) GetAllFromFriendRequest(param GetAllFromFriendRequestParam) ([]*FriendRequestWithSender, error) {
-	// Define the aggregation pipeline
-	lookupSenderStage := bson.D{{Key: "$lookup", Value: bson.M{
+	pipeline := mongo.Pipeline{}
+
+	// Step 1: Match by recipient_id and status
+	matchStage := bson.D{
+		{Key: "$match", Value: bson.M{
+			"recipient_id": param.CurrentUserId,
+		}},
+	}
+	if param.Status != "All" {
+		matchStage[0].Value.(bson.M)["status"] = FriendRequestStatus(param.Status)
+	}
+	pipeline = append(pipeline, matchStage)
+
+	// Step 2: Lookup sender user data
+	lookupStage := bson.D{{Key: "$lookup", Value: bson.M{
 		"from":         "users",
 		"localField":   "sender_id",
 		"foreignField": "_id",
 		"as":           "sender",
 	}}}
+	pipeline = append(pipeline, lookupStage)
 
-	var searchSenderStage bson.D
+	// Step 3: Unwind sender array
+	unwindStage := bson.D{{Key: "$unwind", Value: bson.M{
+		"path":                       "$sender",
+		"preserveNullAndEmptyArrays": false,
+	}}}
+	pipeline = append(pipeline, unwindStage)
+
+	// Step 4: Optional search by sender.full_name using Atlas Search
 	if param.SearchSender != "" {
-		searchSenderStage = bson.D{{Key: "$search", Value: bson.D{
-			{Key: "index", Value: "user_full_name_index"},
-			{Key: "$text", Value: bson.M{
+		searchStage := bson.D{{Key: "$search", Value: bson.M{
+			"index": "user_full_name_index", // dynamic index
+			"text": bson.M{
 				"query": param.SearchSender,
 				"path":  "sender.full_name",
-			}},
+			},
 		}}}
+		pipeline = append(pipeline, searchStage)
 	}
 
-	var matchStage bson.D
-	if param.Status == "All" {
-		matchStage = bson.D{{Key: "$match", Value: bson.M{
-			"recipient_id": param.CurrentUserId,
-		}}}
-	} else {
-		matchStage = bson.D{{Key: "$match", Value: bson.M{
-			"recipient_id": param.CurrentUserId,
-			"status":       FriendRequestStatus(param.Status),
-		}}}
-	}
-
+	// Step 5–6: Pagination
 	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
 	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
 
+	pipeline = append(pipeline, skipStage, limitStage)
+
+	// Execute pipeline
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	cursor, err := m.coll.Aggregate(ctx, mongo.Pipeline{lookupSenderStage, searchSenderStage, matchStage, skipStage, limitStage})
+	cursor, err := m.coll.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(ctx)
+
 	var results []*FriendRequestWithSender
-	if err = cursor.All(context.Background(), &results); err != nil {
+	if err = cursor.All(ctx, &results); err != nil {
 		return nil, err
 	}
+
 	return results, nil
 }
 
@@ -197,51 +214,74 @@ type GetAllSendFriendRequestParam struct {
 	SearchRecipient string
 }
 
-func (m *FriendRequestModel) GetAllSendFriendRequest(param GetAllSendFriendRequestParam) ([]*FriendRequestWithSender, error) {
-	// Define the aggregation pipeline
-	lookupRecipientStage := bson.D{{Key: "$lookup", Value: bson.M{
+func (m *FriendRequestModel) GetAllSendFriendRequest(param GetAllSendFriendRequestParam) ([]*FriendRequestWithRecipient, error) {
+	pipeline := mongo.Pipeline{}
+
+	// Step 1: Match by sender_id and status
+	matchStage := bson.D{
+		{Key: "$match", Value: bson.M{
+			"sender_id": param.CurrentUserId,
+		}},
+	}
+	if param.Status != "All" {
+		matchStage[0].Value.(bson.M)["status"] = FriendRequestStatus(param.Status)
+	}
+	pipeline = append(pipeline, matchStage)
+
+	// Step 2: Lookup recipient user data
+	lookupStage := bson.D{{Key: "$lookup", Value: bson.M{
 		"from":         "users",
 		"localField":   "recipient_id",
 		"foreignField": "_id",
 		"as":           "recipient",
 	}}}
+	pipeline = append(pipeline, lookupStage)
 
-	var searchRecipient bson.D
+	// Step 3: Unwind recipient array
+	unwindStage := bson.D{{Key: "$unwind", Value: bson.M{
+		"path":                       "$recipient",
+		"preserveNullAndEmptyArrays": false,
+	}}}
+	pipeline = append(pipeline, unwindStage)
+
+	// Step 4: Optional search by recipient.full_name using Atlas Search
 	if param.SearchRecipient != "" {
-		searchRecipient = bson.D{{Key: "$search", Value: bson.D{
-			{Key: "index", Value: "user_full_name_index"},
-			{Key: "$text", Value: bson.M{
+		searchStage := bson.D{{Key: "$search", Value: bson.M{
+			"index": "user_full_name_index",
+			"text": bson.M{
 				"query": param.SearchRecipient,
 				"path":  "recipient.full_name",
-			}},
+			},
 		}}}
+		pipeline = append(pipeline, searchStage)
 	}
 
-	var matchStage bson.D
-	if param.Status == "All" {
-		matchStage = bson.D{{Key: "$match", Value: bson.M{
-			"recipient_id": param.CurrentUserId,
-		}}}
-	} else {
-		matchStage = bson.D{{Key: "$match", Value: bson.M{
-			"recipient_id": param.CurrentUserId,
-			"status":       FriendRequestStatus(param.Status),
-		}}}
+	// Step 5–6: Pagination
+	if param.Page <= 0 {
+		param.Page = 1
 	}
-
+	if param.PageSize <= 0 {
+		param.PageSize = 10
+	}
 	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
 	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
 
+	pipeline = append(pipeline, skipStage, limitStage)
+
+	// Execute pipeline
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	cursor, err := m.coll.Aggregate(ctx, mongo.Pipeline{lookupRecipientStage, searchRecipient, matchStage, skipStage, limitStage})
+	cursor, err := m.coll.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
-	var results []*FriendRequestWithSender
-	if err = cursor.All(context.Background(), &results); err != nil {
+	defer cursor.Close(ctx)
+
+	var results []*FriendRequestWithRecipient
+	if err = cursor.All(ctx, &results); err != nil {
 		return nil, err
 	}
+
 	return results, nil
 }

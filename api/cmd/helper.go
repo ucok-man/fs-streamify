@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -177,4 +179,37 @@ func (app *application) DecodeJwtToken(inputToken string, claim *JWTClaim, secre
 		return err
 	}
 	return nil
+}
+
+/* ---------------------------------------------------------------- */
+/*                           URL Query                              */
+/* ---------------------------------------------------------------- */
+
+func (app *application) queryString(qs url.Values, key string, defaultValue string) string {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+	return s
+}
+
+// Comma sparated list
+func (app *application) queryStrings(qs url.Values, key string, defaultValue []string) []string {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+	return strings.Split(s, ",")
+}
+
+func (app *application) queryInt(qs url.Values, key string, defaultValue int) (int, error) {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue, nil
+	}
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return defaultValue, err
+	}
+	return i, nil
 }

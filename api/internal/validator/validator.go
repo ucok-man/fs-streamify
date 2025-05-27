@@ -6,18 +6,26 @@ import (
 )
 
 type schema struct {
-	Config        *z.StructSchema
-	SignupDTO     *z.StructSchema
-	SigninDTO     *z.StructSchema
-	OnboardingDTO *z.StructSchema
+	Config                  *z.StructSchema
+	SignupDTO               *z.StructSchema
+	SigninDTO               *z.StructSchema
+	OnboardingDTO           *z.StructSchema
+	RecommendedUser         *z.StructSchema
+	MyFriendsSchema         *z.StructSchema
+	GetAllFromFriendRequest *z.StructSchema
+	GetAllSendFriendRequest *z.StructSchema
 }
 
 func Schema() schema {
 	return schema{
-		Config:        configSchema,
-		SignupDTO:     signupDTOSchema,
-		SigninDTO:     signinDTOSchema,
-		OnboardingDTO: onboardingDTOSchema,
+		Config:                  configSchema,
+		SignupDTO:               signupDTOSchema,
+		SigninDTO:               signinDTOSchema,
+		OnboardingDTO:           onboardingDTOSchema,
+		RecommendedUser:         recommendedUserSchema,
+		MyFriendsSchema:         myFriendsSchema,
+		GetAllFromFriendRequest: getAllFromFriendRequestSchema,
+		GetAllSendFriendRequest: getAllSendFriendRequestSchema,
 	}
 }
 
