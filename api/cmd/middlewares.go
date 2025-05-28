@@ -32,7 +32,6 @@ func (app *application) withAuthentication(next http.Handler) http.Handler {
 			app.errInvalidAuthenticationToken(w, r)
 			return
 		}
-
 		var claim JWTClaim
 		err = app.DecodeJwtToken(cookie.Value, &claim, app.config.JWT.AuthSecret)
 		if err != nil {
@@ -40,7 +39,7 @@ func (app *application) withAuthentication(next http.Handler) http.Handler {
 			return
 		}
 
-		uid, err := bson.ObjectIDFromHex(claim.ID)
+		uid, err := bson.ObjectIDFromHex(claim.UserID)
 		if err != nil {
 			app.errInvalidAuthenticationToken(w, r)
 			return
@@ -57,6 +56,7 @@ func (app *application) withAuthentication(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		r = app.contextSetUser(r, user)
 		next.ServeHTTP(w, r)
 	})
