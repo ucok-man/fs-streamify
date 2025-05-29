@@ -12,7 +12,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootLayout() {
   return (
-    <main>
+    <main data-theme="forest">
       <Outlet />
       <TanStackRouterDevtools />
     </main>

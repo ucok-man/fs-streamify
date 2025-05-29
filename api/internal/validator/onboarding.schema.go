@@ -8,4 +8,5 @@ var onboardingDTOSchema = z.Struct(z.Schema{
 	"NativeLng":   z.String().Trim().Required(),
 	"LearningLng": z.String().Trim().Required(),
 	"Location":    z.String().Trim().Required(),
+	"ProfilePic":  z.String().URL(),
 })

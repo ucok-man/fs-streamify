@@ -181,6 +181,7 @@ func (app *application) onboarding(w http.ResponseWriter, r *http.Request) {
 	user.NativeLng = dto.NativeLng
 	user.LearningLng = dto.LearningLng
 	user.Location = dto.Location
+	user.ProfilePic = dto.ProfilePic
 	user.IsOnboarded = true
 
 	user, err = app.models.User.Update(user)

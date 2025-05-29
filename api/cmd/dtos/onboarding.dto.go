@@ -6,4 +6,5 @@ type OnboardingDTO struct {
 	NativeLng   string `json:"native_lng"`
 	LearningLng string `json:"learning_lng"`
 	Location    string `json:"location"`
+	ProfilePic  string `json:"profile_pic"`
 }
