@@ -8,84 +8,73 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
-
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as ProtectedImport } from './routes/_protected'
-import { Route as protectedLayoutRouteImport } from './routes/(protected)/_layout/route'
-import { Route as authSignupRouteImport } from './routes/(auth)/signup/route'
-import { Route as authSigninRouteImport } from './routes/(auth)/signin/route'
-import { Route as authOnboardingRouteImport } from './routes/(auth)/onboarding/route'
-import { Route as protectedLayoutIndexImport } from './routes/(protected)/_layout/index'
-import { Route as protectedCallIdRouteImport } from './routes/(protected)/call/$id/route'
-import { Route as protectedLayoutNotificationRouteImport } from './routes/(protected)/_layout/notification/route'
-import { Route as protectedLayoutChatIdRouteImport } from './routes/(protected)/_layout/chat/$id/route'
-
-// Create Virtual Routes
-
-const protectedImport = createFileRoute('/(protected)')()
+import { Route as ProtectedRouteImport } from './routes/_protected/route'
+import { Route as ProtectedLayoutRouteImport } from './routes/_protected/_layout/route'
+import { Route as AuthSignupRouteImport } from './routes/_auth/signup/route'
+import { Route as AuthSigninRouteImport } from './routes/_auth/signin/route'
+import { Route as AuthOnboardingRouteImport } from './routes/_auth/onboarding/route'
+import { Route as ProtectedLayoutIndexImport } from './routes/_protected/_layout/index'
+import { Route as ProtectedCallIdRouteImport } from './routes/_protected/call/$id/route'
+import { Route as ProtectedLayoutNotificationRouteImport } from './routes/_protected/_layout/notification/route'
+import { Route as ProtectedLayoutChatIdRouteImport } from './routes/_protected/_layout/chat/$id/route'
 
 // Create/Update Routes
 
-const protectedRoute = protectedImport.update({
-  id: '/(protected)',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const ProtectedRoute = ProtectedImport.update({
+const ProtectedRouteRoute = ProtectedRouteImport.update({
   id: '/_protected',
   getParentRoute: () => rootRoute,
 } as any)
 
-const protectedLayoutRouteRoute = protectedLayoutRouteImport.update({
+const ProtectedLayoutRouteRoute = ProtectedLayoutRouteImport.update({
   id: '/_layout',
-  getParentRoute: () => protectedRoute,
+  getParentRoute: () => ProtectedRouteRoute,
 } as any)
 
-const authSignupRouteRoute = authSignupRouteImport.update({
-  id: '/(auth)/signup',
+const AuthSignupRouteRoute = AuthSignupRouteImport.update({
+  id: '/_auth/signup',
   path: '/signup',
   getParentRoute: () => rootRoute,
 } as any)
 
-const authSigninRouteRoute = authSigninRouteImport.update({
-  id: '/(auth)/signin',
+const AuthSigninRouteRoute = AuthSigninRouteImport.update({
+  id: '/_auth/signin',
   path: '/signin',
   getParentRoute: () => rootRoute,
 } as any)
 
-const authOnboardingRouteRoute = authOnboardingRouteImport.update({
-  id: '/(auth)/onboarding',
+const AuthOnboardingRouteRoute = AuthOnboardingRouteImport.update({
+  id: '/_auth/onboarding',
   path: '/onboarding',
   getParentRoute: () => rootRoute,
 } as any)
 
-const protectedLayoutIndexRoute = protectedLayoutIndexImport.update({
+const ProtectedLayoutIndexRoute = ProtectedLayoutIndexImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => protectedLayoutRouteRoute,
+  getParentRoute: () => ProtectedLayoutRouteRoute,
 } as any)
 
-const protectedCallIdRouteRoute = protectedCallIdRouteImport.update({
+const ProtectedCallIdRouteRoute = ProtectedCallIdRouteImport.update({
   id: '/call/$id',
   path: '/call/$id',
-  getParentRoute: () => protectedRoute,
+  getParentRoute: () => ProtectedRouteRoute,
 } as any)
 
-const protectedLayoutNotificationRouteRoute =
-  protectedLayoutNotificationRouteImport.update({
+const ProtectedLayoutNotificationRouteRoute =
+  ProtectedLayoutNotificationRouteImport.update({
     id: '/notification',
     path: '/notification',
-    getParentRoute: () => protectedLayoutRouteRoute,
+    getParentRoute: () => ProtectedLayoutRouteRoute,
   } as any)
 
-const protectedLayoutChatIdRouteRoute = protectedLayoutChatIdRouteImport.update(
+const ProtectedLayoutChatIdRouteRoute = ProtectedLayoutChatIdRouteImport.update(
   {
     id: '/chat/$id',
     path: '/chat/$id',
-    getParentRoute: () => protectedLayoutRouteRoute,
+    getParentRoute: () => ProtectedLayoutRouteRoute,
   } as any,
 )
 
@@ -97,140 +86,132 @@ declare module '@tanstack/react-router' {
       id: '/_protected'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof ProtectedImport
+      preLoaderRoute: typeof ProtectedRouteImport
       parentRoute: typeof rootRoute
     }
-    '/(auth)/onboarding': {
-      id: '/(auth)/onboarding'
+    '/_auth/onboarding': {
+      id: '/_auth/onboarding'
       path: '/onboarding'
       fullPath: '/onboarding'
-      preLoaderRoute: typeof authOnboardingRouteImport
+      preLoaderRoute: typeof AuthOnboardingRouteImport
       parentRoute: typeof rootRoute
     }
-    '/(auth)/signin': {
-      id: '/(auth)/signin'
+    '/_auth/signin': {
+      id: '/_auth/signin'
       path: '/signin'
       fullPath: '/signin'
-      preLoaderRoute: typeof authSigninRouteImport
+      preLoaderRoute: typeof AuthSigninRouteImport
       parentRoute: typeof rootRoute
     }
-    '/(auth)/signup': {
-      id: '/(auth)/signup'
+    '/_auth/signup': {
+      id: '/_auth/signup'
       path: '/signup'
       fullPath: '/signup'
-      preLoaderRoute: typeof authSignupRouteImport
+      preLoaderRoute: typeof AuthSignupRouteImport
       parentRoute: typeof rootRoute
     }
-    '/(protected)': {
-      id: '/(protected)'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof protectedImport
-      parentRoute: typeof rootRoute
+    '/_protected/_layout': {
+      id: '/_protected/_layout'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof ProtectedLayoutRouteImport
+      parentRoute: typeof ProtectedRouteImport
     }
-    '/(protected)/_layout': {
-      id: '/(protected)/_layout'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof protectedLayoutRouteImport
-      parentRoute: typeof protectedRoute
-    }
-    '/(protected)/_layout/notification': {
-      id: '/(protected)/_layout/notification'
+    '/_protected/_layout/notification': {
+      id: '/_protected/_layout/notification'
       path: '/notification'
       fullPath: '/notification'
-      preLoaderRoute: typeof protectedLayoutNotificationRouteImport
-      parentRoute: typeof protectedLayoutRouteImport
+      preLoaderRoute: typeof ProtectedLayoutNotificationRouteImport
+      parentRoute: typeof ProtectedLayoutRouteImport
     }
-    '/(protected)/call/$id': {
-      id: '/(protected)/call/$id'
+    '/_protected/call/$id': {
+      id: '/_protected/call/$id'
       path: '/call/$id'
       fullPath: '/call/$id'
-      preLoaderRoute: typeof protectedCallIdRouteImport
-      parentRoute: typeof protectedImport
+      preLoaderRoute: typeof ProtectedCallIdRouteImport
+      parentRoute: typeof ProtectedRouteImport
     }
-    '/(protected)/_layout/': {
-      id: '/(protected)/_layout/'
+    '/_protected/_layout/': {
+      id: '/_protected/_layout/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof protectedLayoutIndexImport
-      parentRoute: typeof protectedLayoutRouteImport
+      preLoaderRoute: typeof ProtectedLayoutIndexImport
+      parentRoute: typeof ProtectedLayoutRouteImport
     }
-    '/(protected)/_layout/chat/$id': {
-      id: '/(protected)/_layout/chat/$id'
+    '/_protected/_layout/chat/$id': {
+      id: '/_protected/_layout/chat/$id'
       path: '/chat/$id'
       fullPath: '/chat/$id'
-      preLoaderRoute: typeof protectedLayoutChatIdRouteImport
-      parentRoute: typeof protectedLayoutRouteImport
+      preLoaderRoute: typeof ProtectedLayoutChatIdRouteImport
+      parentRoute: typeof ProtectedLayoutRouteImport
     }
   }
 }
 
 // Create and export the route tree
 
-interface protectedLayoutRouteRouteChildren {
-  protectedLayoutNotificationRouteRoute: typeof protectedLayoutNotificationRouteRoute
-  protectedLayoutIndexRoute: typeof protectedLayoutIndexRoute
-  protectedLayoutChatIdRouteRoute: typeof protectedLayoutChatIdRouteRoute
+interface ProtectedLayoutRouteRouteChildren {
+  ProtectedLayoutNotificationRouteRoute: typeof ProtectedLayoutNotificationRouteRoute
+  ProtectedLayoutIndexRoute: typeof ProtectedLayoutIndexRoute
+  ProtectedLayoutChatIdRouteRoute: typeof ProtectedLayoutChatIdRouteRoute
 }
 
-const protectedLayoutRouteRouteChildren: protectedLayoutRouteRouteChildren = {
-  protectedLayoutNotificationRouteRoute: protectedLayoutNotificationRouteRoute,
-  protectedLayoutIndexRoute: protectedLayoutIndexRoute,
-  protectedLayoutChatIdRouteRoute: protectedLayoutChatIdRouteRoute,
+const ProtectedLayoutRouteRouteChildren: ProtectedLayoutRouteRouteChildren = {
+  ProtectedLayoutNotificationRouteRoute: ProtectedLayoutNotificationRouteRoute,
+  ProtectedLayoutIndexRoute: ProtectedLayoutIndexRoute,
+  ProtectedLayoutChatIdRouteRoute: ProtectedLayoutChatIdRouteRoute,
 }
 
-const protectedLayoutRouteRouteWithChildren =
-  protectedLayoutRouteRoute._addFileChildren(protectedLayoutRouteRouteChildren)
+const ProtectedLayoutRouteRouteWithChildren =
+  ProtectedLayoutRouteRoute._addFileChildren(ProtectedLayoutRouteRouteChildren)
 
-interface protectedRouteChildren {
-  protectedLayoutRouteRoute: typeof protectedLayoutRouteRouteWithChildren
-  protectedCallIdRouteRoute: typeof protectedCallIdRouteRoute
+interface ProtectedRouteRouteChildren {
+  ProtectedLayoutRouteRoute: typeof ProtectedLayoutRouteRouteWithChildren
+  ProtectedCallIdRouteRoute: typeof ProtectedCallIdRouteRoute
 }
 
-const protectedRouteChildren: protectedRouteChildren = {
-  protectedLayoutRouteRoute: protectedLayoutRouteRouteWithChildren,
-  protectedCallIdRouteRoute: protectedCallIdRouteRoute,
+const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
+  ProtectedLayoutRouteRoute: ProtectedLayoutRouteRouteWithChildren,
+  ProtectedCallIdRouteRoute: ProtectedCallIdRouteRoute,
 }
 
-const protectedRouteWithChildren = protectedRoute._addFileChildren(
-  protectedRouteChildren,
+const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
+  ProtectedRouteRouteChildren,
 )
 
 export interface FileRoutesByFullPath {
-  '': typeof ProtectedRoute
-  '/onboarding': typeof authOnboardingRouteRoute
-  '/signin': typeof authSigninRouteRoute
-  '/signup': typeof authSignupRouteRoute
-  '/': typeof protectedLayoutIndexRoute
-  '/notification': typeof protectedLayoutNotificationRouteRoute
-  '/call/$id': typeof protectedCallIdRouteRoute
-  '/chat/$id': typeof protectedLayoutChatIdRouteRoute
+  '': typeof ProtectedLayoutRouteRouteWithChildren
+  '/onboarding': typeof AuthOnboardingRouteRoute
+  '/signin': typeof AuthSigninRouteRoute
+  '/signup': typeof AuthSignupRouteRoute
+  '/notification': typeof ProtectedLayoutNotificationRouteRoute
+  '/call/$id': typeof ProtectedCallIdRouteRoute
+  '/': typeof ProtectedLayoutIndexRoute
+  '/chat/$id': typeof ProtectedLayoutChatIdRouteRoute
 }
 
 export interface FileRoutesByTo {
-  '': typeof ProtectedRoute
-  '/onboarding': typeof authOnboardingRouteRoute
-  '/signin': typeof authSigninRouteRoute
-  '/signup': typeof authSignupRouteRoute
-  '/notification': typeof protectedLayoutNotificationRouteRoute
-  '/call/$id': typeof protectedCallIdRouteRoute
-  '/': typeof protectedLayoutIndexRoute
-  '/chat/$id': typeof protectedLayoutChatIdRouteRoute
+  '': typeof ProtectedRouteRouteWithChildren
+  '/onboarding': typeof AuthOnboardingRouteRoute
+  '/signin': typeof AuthSigninRouteRoute
+  '/signup': typeof AuthSignupRouteRoute
+  '/notification': typeof ProtectedLayoutNotificationRouteRoute
+  '/call/$id': typeof ProtectedCallIdRouteRoute
+  '/': typeof ProtectedLayoutIndexRoute
+  '/chat/$id': typeof ProtectedLayoutChatIdRouteRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
-  '/_protected': typeof ProtectedRoute
-  '/(auth)/onboarding': typeof authOnboardingRouteRoute
-  '/(auth)/signin': typeof authSigninRouteRoute
-  '/(auth)/signup': typeof authSignupRouteRoute
-  '/(protected)': typeof protectedRouteWithChildren
-  '/(protected)/_layout': typeof protectedLayoutRouteRouteWithChildren
-  '/(protected)/_layout/notification': typeof protectedLayoutNotificationRouteRoute
-  '/(protected)/call/$id': typeof protectedCallIdRouteRoute
-  '/(protected)/_layout/': typeof protectedLayoutIndexRoute
-  '/(protected)/_layout/chat/$id': typeof protectedLayoutChatIdRouteRoute
+  '/_protected': typeof ProtectedRouteRouteWithChildren
+  '/_auth/onboarding': typeof AuthOnboardingRouteRoute
+  '/_auth/signin': typeof AuthSigninRouteRoute
+  '/_auth/signup': typeof AuthSignupRouteRoute
+  '/_protected/_layout': typeof ProtectedLayoutRouteRouteWithChildren
+  '/_protected/_layout/notification': typeof ProtectedLayoutNotificationRouteRoute
+  '/_protected/call/$id': typeof ProtectedCallIdRouteRoute
+  '/_protected/_layout/': typeof ProtectedLayoutIndexRoute
+  '/_protected/_layout/chat/$id': typeof ProtectedLayoutChatIdRouteRoute
 }
 
 export interface FileRouteTypes {
@@ -240,9 +221,9 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/signin'
     | '/signup'
-    | '/'
     | '/notification'
     | '/call/$id'
+    | '/'
     | '/chat/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -257,32 +238,29 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_protected'
-    | '/(auth)/onboarding'
-    | '/(auth)/signin'
-    | '/(auth)/signup'
-    | '/(protected)'
-    | '/(protected)/_layout'
-    | '/(protected)/_layout/notification'
-    | '/(protected)/call/$id'
-    | '/(protected)/_layout/'
-    | '/(protected)/_layout/chat/$id'
+    | '/_auth/onboarding'
+    | '/_auth/signin'
+    | '/_auth/signup'
+    | '/_protected/_layout'
+    | '/_protected/_layout/notification'
+    | '/_protected/call/$id'
+    | '/_protected/_layout/'
+    | '/_protected/_layout/chat/$id'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  ProtectedRoute: typeof ProtectedRoute
-  authOnboardingRouteRoute: typeof authOnboardingRouteRoute
-  authSigninRouteRoute: typeof authSigninRouteRoute
-  authSignupRouteRoute: typeof authSignupRouteRoute
-  protectedRoute: typeof protectedRouteWithChildren
+  ProtectedRouteRoute: typeof ProtectedRouteRouteWithChildren
+  AuthOnboardingRouteRoute: typeof AuthOnboardingRouteRoute
+  AuthSigninRouteRoute: typeof AuthSigninRouteRoute
+  AuthSignupRouteRoute: typeof AuthSignupRouteRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  ProtectedRoute: ProtectedRoute,
-  authOnboardingRouteRoute: authOnboardingRouteRoute,
-  authSigninRouteRoute: authSigninRouteRoute,
-  authSignupRouteRoute: authSignupRouteRoute,
-  protectedRoute: protectedRouteWithChildren,
+  ProtectedRouteRoute: ProtectedRouteRouteWithChildren,
+  AuthOnboardingRouteRoute: AuthOnboardingRouteRoute,
+  AuthSigninRouteRoute: AuthSigninRouteRoute,
+  AuthSignupRouteRoute: AuthSignupRouteRoute,
 }
 
 export const routeTree = rootRoute
@@ -296,55 +274,51 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/_protected",
-        "/(auth)/onboarding",
-        "/(auth)/signin",
-        "/(auth)/signup",
-        "/(protected)"
+        "/_auth/onboarding",
+        "/_auth/signin",
+        "/_auth/signup"
       ]
     },
     "/_protected": {
-      "filePath": "_protected.tsx"
-    },
-    "/(auth)/onboarding": {
-      "filePath": "(auth)/onboarding/route.tsx"
-    },
-    "/(auth)/signin": {
-      "filePath": "(auth)/signin/route.tsx"
-    },
-    "/(auth)/signup": {
-      "filePath": "(auth)/signup/route.tsx"
-    },
-    "/(protected)": {
-      "filePath": "(protected)/_layout",
+      "filePath": "_protected/route.tsx",
       "children": [
-        "/(protected)/_layout",
-        "/(protected)/call/$id"
+        "/_protected/_layout",
+        "/_protected/call/$id"
       ]
     },
-    "/(protected)/_layout": {
-      "filePath": "(protected)/_layout/route.tsx",
-      "parent": "/(protected)",
+    "/_auth/onboarding": {
+      "filePath": "_auth/onboarding/route.tsx"
+    },
+    "/_auth/signin": {
+      "filePath": "_auth/signin/route.tsx"
+    },
+    "/_auth/signup": {
+      "filePath": "_auth/signup/route.tsx"
+    },
+    "/_protected/_layout": {
+      "filePath": "_protected/_layout/route.tsx",
+      "parent": "/_protected",
       "children": [
-        "/(protected)/_layout/notification",
-        "/(protected)/_layout/",
-        "/(protected)/_layout/chat/$id"
+        "/_protected/_layout/notification",
+        "/_protected/_layout/",
+        "/_protected/_layout/chat/$id"
       ]
     },
-    "/(protected)/_layout/notification": {
-      "filePath": "(protected)/_layout/notification/route.tsx",
-      "parent": "/(protected)/_layout"
+    "/_protected/_layout/notification": {
+      "filePath": "_protected/_layout/notification/route.tsx",
+      "parent": "/_protected/_layout"
     },
-    "/(protected)/call/$id": {
-      "filePath": "(protected)/call/$id/route.tsx",
-      "parent": "/(protected)"
+    "/_protected/call/$id": {
+      "filePath": "_protected/call/$id/route.tsx",
+      "parent": "/_protected"
     },
-    "/(protected)/_layout/": {
-      "filePath": "(protected)/_layout/index.tsx",
-      "parent": "/(protected)/_layout"
+    "/_protected/_layout/": {
+      "filePath": "_protected/_layout/index.tsx",
+      "parent": "/_protected/_layout"
     },
-    "/(protected)/_layout/chat/$id": {
-      "filePath": "(protected)/_layout/chat/$id/route.tsx",
-      "parent": "/(protected)/_layout"
+    "/_protected/_layout/chat/$id": {
+      "filePath": "_protected/_layout/chat/$id/route.tsx",
+      "parent": "/_protected/_layout"
     }
   }
 }

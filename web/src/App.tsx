@@ -23,11 +23,9 @@ export default function App() {
 
   if (session.isPending) return <PageLoader />;
 
-  if (!session.isPending && session.error) {
-    if (!session.error.status || session.error.status >= 500) {
-      toast.error("Sorry we have a problem on our server. Try again later!");
-      console.error("Server error during session check:", session?.error);
-    }
+  if (session.error?.status && session.error.status !== 401) {
+    toast.error("Sorry we have a problem on our server. Try again later!");
+    console.error("Server error during session check:", session?.error);
 
     return <PageLoader />;
   }

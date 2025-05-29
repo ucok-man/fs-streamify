@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/(protected)/_layout")({
+export const Route = createFileRoute("/_protected/_layout")({
   loader: ({ location }) => {
     return {
       showSidebar: !location.pathname.startsWith("/chat"),

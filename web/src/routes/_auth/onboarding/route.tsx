@@ -14,25 +14,19 @@ import { generateAvatar, parseApiError } from "../../../lib/utils";
 import type { UserResponse } from "../../../types/user-response.type";
 import { onboardingSchema, type OnboardingData } from "./-onboarding.schema";
 
-export const Route = createFileRoute("/(auth)/onboarding")({
-  beforeLoad: ({ context, location }) => {
+export const Route = createFileRoute("/_auth/onboarding")({
+  beforeLoad: ({ context }) => {
     const user = context.session.data;
 
     if (!user) {
       throw redirect({
         to: "/signin",
-        search: {
-          redirect: location.href,
-        },
       });
     }
 
     if (user && user.is_onboarded) {
       throw redirect({
         to: "/",
-        search: {
-          redirect: location.href,
-        },
       });
     }
   },

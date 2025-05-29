@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/(protected)/call/$id")({
+export const Route = createFileRoute("/_protected/call/$id")({
   component: CallPage,
 });
 

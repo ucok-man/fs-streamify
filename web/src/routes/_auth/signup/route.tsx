@@ -13,25 +13,19 @@ import { parseApiError } from "../../../lib/utils";
 import type { UserResponse } from "../../../types/user-response.type";
 import { signupSchema, type SignupData } from "./-signup.schema";
 
-export const Route = createFileRoute("/(auth)/signup")({
-  beforeLoad: ({ context, location }) => {
+export const Route = createFileRoute("/_auth/signup")({
+  beforeLoad: ({ context }) => {
     const user = context.session.data;
 
     if (user && user.is_onboarded) {
       throw redirect({
         to: "/",
-        search: {
-          redirect: location.href,
-        },
       });
     }
 
     if (user && !user.is_onboarded) {
       throw redirect({
         to: "/onboarding",
-        search: {
-          redirect: location.href,
-        },
       });
     }
   },
@@ -106,7 +100,7 @@ function SignupPage() {
               <div className="space-y-4">
                 <div>
                   <h2 className="text-xl font-semibold">Create an Account</h2>
-                  <p>
+                  <p className="text-sm opacity-70">
                     Join Streamify and start your language learning adventure!
                   </p>
                 </div>
