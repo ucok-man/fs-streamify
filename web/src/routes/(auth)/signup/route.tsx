@@ -1,46 +1,45 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import type { AxiosError } from "axios";
 import { ShipWheel } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { Link, useNavigate } from "react-router";
-import { z } from "zod";
-import SpinnerBtn from "../components/spinner-btn";
-import { apiclient } from "../lib/apiclient";
-import { refetchQuery } from "../lib/query-client";
-import { parseApiError } from "../lib/utils";
-import type { UserResponse } from "../types/user-response.type";
+import SpinnerBtn from "../../../components/spinner-btn";
+import { apiclient } from "../../../lib/apiclient";
+import { refetchQuery } from "../../../lib/query-client";
+import { parseApiError } from "../../../lib/utils";
+import type { UserResponse } from "../../../types/user-response.type";
+import { signupSchema, type SignupData } from "./-signup.schema";
 
-const signupSchema = z.object({
-  fullname: z
-    .string()
-    .min(2, { message: "Full name must be at least 2 characters long" })
-    .max(100, { message: "Full name must be less than 100 characters" }),
+export const Route = createFileRoute("/(auth)/signup")({
+  beforeLoad: ({ context, location }) => {
+    const user = context.session.data;
 
-  email: z.string().email({ message: "Invalid email address" }),
+    if (user && user.is_onboarded) {
+      throw redirect({
+        to: "/",
+        search: {
+          redirect: location.href,
+        },
+      });
+    }
 
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters long" })
-    .max(100, { message: "Password must be less than 100 characters" })
-    .regex(/[a-z]/, {
-      message: "Password must contain at least one lowercase letter",
-    })
-    .regex(/[A-Z]/, {
-      message: "Password must contain at least one uppercase letter",
-    })
-    .regex(/[0-9]/, { message: "Password must contain at least one number" })
-    .regex(/[^A-Za-z0-9]/, {
-      message: "Password must contain at least one special character",
-    }),
+    if (user && !user.is_onboarded) {
+      throw redirect({
+        to: "/onboarding",
+        search: {
+          redirect: location.href,
+        },
+      });
+    }
+  },
+  component: SignupPage,
 });
 
-type SignupData = z.infer<typeof signupSchema>;
-
-export default function SignupPage() {
-  const navigate = useNavigate();
+function SignupPage() {
+  const navigate = Route.useNavigate();
   const [isRedirecting, startTransition] = useTransition();
 
   const form = useForm({
@@ -65,7 +64,9 @@ export default function SignupPage() {
       form.reset();
       refetchQuery(["auth:session"]);
       startTransition(() => {
-        navigate("/");
+        navigate({
+          to: "/onboarding",
+        });
       });
     },
     onError: (err: AxiosError) => {
