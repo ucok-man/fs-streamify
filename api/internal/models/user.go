@@ -111,6 +111,7 @@ func (m *UserModel) Insert(user *User) (*User, error) {
 	current := time.Now()
 	user.CreatedAt = current
 	user.UpdatedAt = current
+	user.FriendIDs = []bson.ObjectID{}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -167,47 +168,101 @@ type RecommendedUserParam struct {
 	PageSize    int64
 }
 
-func (m *UserModel) Recommended(param RecommendedUserParam) ([]*User, Metadata, error) {
-	// Validasi nilai Page dan PageSize
-	if param.Page <= 0 {
-		param.Page = 1
-	}
-	if param.PageSize <= 0 {
-		param.PageSize = 10
-	}
-
-	filter := bson.D{{Key: "$and", Value: bson.A{
-		bson.D{{"_id", bson.D{{"$ne", param.CurrentUser.ID}}}},
-		bson.D{{"_id", bson.D{{"$nin", param.CurrentUser.FriendIDs}}}},
-		bson.D{{"isOnboaded", true}},
+func (m *UserModel) Recommended(param RecommendedUserParam) ([]*UserWithFriendRequest, Metadata, error) {
+	matchStage := bson.D{{Key: "$match", Value: bson.D{
+		{"$and", bson.A{
+			bson.D{{"_id", bson.D{{"$ne", param.CurrentUser.ID}}}},
+			bson.D{{"_id", bson.D{{"$nin", param.CurrentUser.FriendIDs}}}},
+			bson.D{{"is_onboarded", true}},
+		}},
 	}}}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	lookupStageSentFriendRequest := bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "friend_request"},
+		{Key: "let", Value: bson.D{
+			{Key: "recipientId", Value: "$_id"},
+		}},
+		{Key: "pipeline", Value: bson.A{
+			bson.D{{Key: "$match", Value: bson.D{
+				{Key: "$expr", Value: bson.D{
+					{Key: "$and", Value: bson.A{
+						bson.D{{Key: "$eq", Value: bson.A{"$sender_id", param.CurrentUser.ID}}},
+						bson.D{{Key: "$eq", Value: bson.A{"$recipient_id", "$$recipientId"}}},
+					}},
+				}},
+			}}},
+		}},
+		{Key: "as", Value: "sent_friend_request"},
+	}}}
+
+	lookupStageFromFriendRequest := bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "friend_request"},
+		{Key: "let", Value: bson.D{
+			{Key: "recipientId", Value: "$_id"},
+		}},
+		{Key: "pipeline", Value: bson.A{
+			bson.D{{Key: "$match", Value: bson.D{
+				{Key: "$expr", Value: bson.D{
+					{Key: "$and", Value: bson.A{
+						bson.D{{Key: "$eq", Value: bson.A{"$sender_id", "$$recipientId"}}},
+						bson.D{{Key: "$eq", Value: bson.A{"$recipient_id", param.CurrentUser.ID}}},
+					}},
+				}},
+			}}},
+		}},
+		{Key: "as", Value: "from_friend_request"},
+	}}}
+
+	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
+	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
+
+	// Result and count in a single aggregation
+	resultsPipeline := mongo.Pipeline{matchStage, lookupStageSentFriendRequest, lookupStageFromFriendRequest, skipStage, limitStage}
+	// resultsPipeline := mongo.Pipeline{matchStage, skipStage, limitStage}
+
+	countPipeline := mongo.Pipeline{matchStage, bson.D{{Key: "$count", Value: "total"}}}
+
+	facetStage := bson.D{{Key: "$facet", Value: bson.M{
+		"data":  resultsPipeline,
+		"count": countPipeline,
+	}}}
+
+	pipeline := mongo.Pipeline{facetStage}
+
+	// Execute
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	findOptions := options.Find()
-	findOptions.SetSkip((param.Page - 1) * param.PageSize)
-	findOptions.SetLimit(param.PageSize)
-
-	cursor, err := m.coll.Find(ctx, filter, findOptions)
+	cursor, err := m.coll.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, Metadata{}, err
 	}
 	defer cursor.Close(ctx)
 
-	totalCount, err := m.coll.CountDocuments(ctx, filter)
-	if err != nil {
+	var rawResult []struct {
+		Data  []*UserWithFriendRequest `bson:"data"`
+		Count []struct {
+			Total int64 `bson:"total"`
+		} `bson:"count"`
+	}
+
+	if err := cursor.All(ctx, &rawResult); err != nil {
 		return nil, Metadata{}, err
+	}
+
+	if len(rawResult) == 0 {
+		return nil, Metadata{}, nil
+	}
+	result := rawResult[0]
+
+	var totalCount int64
+	if len(result.Count) > 0 {
+		totalCount = result.Count[0].Total
 	}
 
 	metadata := calculateMetadata(totalCount, param.Page, param.PageSize)
 
-	var users []*User
-	if err = cursor.All(ctx, &users); err != nil {
-		return nil, Metadata{}, err
-	}
-
-	return users, metadata, nil
+	return result.Data, metadata, nil
 }
 
 type MyFriendsParam struct {
@@ -218,12 +273,10 @@ type MyFriendsParam struct {
 }
 
 func (m *UserModel) MyFriends(param MyFriendsParam) ([]*User, Metadata, error) {
-	// pipeline := mongo.Pipeline{}
-
 	// Step 1: Match hanya user yang merupakan teman dan sudah onboarded
 	matchStage := bson.D{{Key: "$match", Value: bson.M{
-		"_id":        bson.M{"$in": param.CurrentUser.FriendIDs},
-		"isOnboaded": true,
+		"_id":          bson.M{"$in": param.CurrentUser.FriendIDs},
+		"is_onboarded": true,
 	}}}
 
 	// Step 2: Optional search by full_name using Atlas Search

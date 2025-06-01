@@ -42,6 +42,7 @@ func (app *application) recommended(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		app.errInternalServer(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"users": users, "metadata": metadata}, nil)
@@ -81,6 +82,7 @@ func (app *application) myfriend(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		app.errInternalServer(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"users": users, "metadata": metadata}, nil)
@@ -221,6 +223,7 @@ func (app *application) getAllFromFriendRequest(w http.ResponseWriter, r *http.R
 	})
 	if err != nil {
 		app.errInternalServer(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": friendRequests, "metadata": metadata}, nil)
@@ -262,6 +265,7 @@ func (app *application) getAllSendFriendRequest(w http.ResponseWriter, r *http.R
 	})
 	if err != nil {
 		app.errInternalServer(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"friend_requests": friendRequests, "metadata": metadata}, nil)

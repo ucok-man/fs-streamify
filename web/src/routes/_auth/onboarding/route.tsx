@@ -65,6 +65,7 @@ function OnboardingPage() {
       startTransition(() => {
         navigate({
           to: "/",
+          reloadDocument: true,
         });
       });
     },

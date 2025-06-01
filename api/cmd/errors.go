@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 func (app *application) logError(r *http.Request, err error) {
@@ -10,7 +12,7 @@ func (app *application) logError(r *http.Request, err error) {
 		Err(err).
 		CallerSkipFrame(2).
 		Str("request_method", r.Method).
-		Str("request_url", r.URL.String())
+		Str("request_url", r.URL.String()).Send()
 }
 
 func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, status int, message interface{}) {
@@ -24,7 +26,7 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 }
 
 func (app *application) errInternalServer(w http.ResponseWriter, r *http.Request, err error) {
-	app.logError(r, err)
+	app.logError(r, errors.WithStack(err))
 
 	message := "the server encountered a problem and could not process your request"
 	app.errorResponse(w, r, 500, message)

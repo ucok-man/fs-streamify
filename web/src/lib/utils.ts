@@ -29,3 +29,6 @@ export function generateAvatar() {
   const idx = Math.floor(Math.random() * 100) + 1; // 1-100 included
   return `https://avatar.iran.liara.run/public/${idx}.png`;
 }
+
+export const capitialize = (str: string) =>
+  str.charAt(0).toUpperCase() + str.slice(1);
