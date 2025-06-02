@@ -251,7 +251,7 @@ func (app *application) getAllSendFriendRequest(w http.ResponseWriter, r *http.R
 	dto.SearchRecipient = app.queryString(r.URL.Query(), "search_recipient", "")
 	dto.Status = app.queryString(r.URL.Query(), "status", "All")
 
-	errmap := validator.Schema().GetAllFromFriendRequest.Validate(&dto)
+	errmap := validator.Schema().GetAllSendFriendRequest.Validate(&dto)
 	if errmap != nil {
 		app.errFailedValidation(w, r, validator.Sanitize(errmap))
 		return

@@ -1,14 +1,14 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { UserCheckIcon } from "lucide-react";
+import { BellIcon } from "lucide-react";
 import { useEffect, useMemo, type PropsWithChildren } from "react";
 import toast from "react-hot-toast";
 import { useIntersectionObserver } from "usehooks-ts";
 import { apiclient } from "../../../../lib/apiclient";
-import type { FriendRequestWithSenderResponse } from "../../../../types/friend-request-with-sender-response.type";
+import type { FriendRequestWithRecipientResponse } from "../../../../types/friend-request-with-recipient-response.type";
 import type { MetadataResponse } from "../../../../types/metadata-response.type";
-import IncomingCard from "./-incoming-card";
+import OutgoingCard from "./-outgoing-card";
 
-export default function IncomingFriendRequest() {
+export default function OutgoingFriendRequest() {
   const {
     data,
     isPending,
@@ -17,13 +17,13 @@ export default function IncomingFriendRequest() {
     isFetchingNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: ["incoming:friend:request"],
+    queryKey: ["outgoing:friend:request"],
     queryFn: async ({ pageParam }) => {
       const { data } = await apiclient.get(
-        `/users/friends-request/from?status=Pending&page_size=6&page=${pageParam}`
+        `/users/friends-request/send?status=Pending&page_size=6&page=${pageParam}`
       );
       return data as {
-        friend_requests: FriendRequestWithSenderResponse[];
+        friend_requests: FriendRequestWithRecipientResponse[];
         metadata: MetadataResponse;
       };
     },
@@ -98,7 +98,7 @@ export default function IncomingFriendRequest() {
       <div className="relative">
         <div className="grid gap-x-4 gap-y-2 md:grid-cols-2">
           {requests.map((request, idx) => (
-            <IncomingCard key={idx} item={request} />
+            <OutgoingCard key={idx} item={request} />
           ))}
         </div>
         {/* Marker */}
@@ -118,8 +118,8 @@ function Wrapper({ children }: PropsWithChildren) {
   return (
     <section className="relative space-y-4">
       <h2 className="flex items-center gap-2 text-xl font-semibold">
-        <UserCheckIcon className="h-5 w-5 text-primary" />
-        Incoming Friend Requests
+        <BellIcon className="h-5 w-5 text-primary" />
+        Outgoing Friend Requests
       </h2>
 
       <div className="max-h-[280px] overflow-y-scroll">{children}</div>
