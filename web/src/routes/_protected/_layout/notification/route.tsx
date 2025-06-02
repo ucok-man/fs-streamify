@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import IncomingFriendRequest from "../../../../components/pages/notification/incoming-friend-request";
+import IncomingFriendRequest from "./-incoming-friend-request";
 
 export const Route = createFileRoute("/_protected/_layout/notification")({
   component: NotificationPage,
