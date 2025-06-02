@@ -27,6 +27,8 @@ func (app *application) routes() http.Handler {
 		r.Route("/users", func(r chi.Router) {
 			r.Use(app.withAuthentication)
 
+			r.Get("/{userId}", app.getUserById)
+
 			r.Get("/recommended", app.recommended)
 			r.Get("/friends-with-me", app.myfriend)
 

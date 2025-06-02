@@ -13,6 +13,31 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+func (app *application) getUserById(w http.ResponseWriter, r *http.Request) {
+	idparam := chi.URLParam(r, "userId")
+	userID, err := bson.ObjectIDFromHex(idparam)
+	if err != nil {
+		app.errBadRequest(w, r, fmt.Errorf("invalid user id value"))
+		return
+	}
+
+	user, err := app.models.User.GetById(userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrRecordNotFound):
+			app.errNotFound(w, r)
+		default:
+			app.errInternalServer(w, r, err)
+		}
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	if err != nil {
+		app.errInternalServer(w, r, err)
+	}
+}
+
 func (app *application) recommended(w http.ResponseWriter, r *http.Request) {
 	var dto dto.RecommendedUserDTO
 	var err error

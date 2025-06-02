@@ -73,9 +73,9 @@ export default function FriendCard({ friend }: Props) {
         <p className="line-clamp-2 text-sm opacity-70">{friend.bio}</p>
         {/* Action button */}
         <Link
-          to={`/chat/$id`}
+          to={`/chat/$friendId`}
           params={{
-            id: friend.id,
+            friendId: friend.id,
           }}
           className="btn w-full btn-outline hover:border-accent"
         >

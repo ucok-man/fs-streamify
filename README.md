@@ -1,3 +1,3 @@
 TODO
 
-- Setup Frontend
+- Implement Chat Page
