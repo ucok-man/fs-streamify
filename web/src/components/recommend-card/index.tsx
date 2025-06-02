@@ -63,7 +63,7 @@ export default function RecommendCard({ user }: Props) {
           </span>
         </div>
 
-        <p className="text-sm opacity-70">{user.bio}</p>
+        <p className="line-clamp-2 text-sm opacity-70">{user.bio}</p>
 
         {/* Action button */}
         <button

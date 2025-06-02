@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { UsersIcon } from "lucide-react";
+import { ArrowRight, UsersIcon } from "lucide-react";
 import type { JSX, PropsWithChildren } from "react";
 
 import toast from "react-hot-toast";
@@ -14,7 +14,7 @@ export default function Friends(): JSX.Element {
     queryKey: ["all:users", "friends"],
     queryFn: async () => {
       const response = await apiclient.get(
-        "/users/friends-with-me?page=1&page_size=5"
+        "/users/friends-with-me?page=1&page_size=4"
       );
       return response.data as {
         users: UserResponse[];
@@ -64,6 +64,13 @@ export default function Friends(): JSX.Element {
           <FriendCard key={friend.id} friend={friend} />
         ))}
       </div>
+
+      <Link
+        to={`/friend`}
+        className="my-6 block flex w-full items-center justify-center gap-1 text-center underline underline-offset-4 hover:text-accent"
+      >
+        See Other <ArrowRight className="size-5" />
+      </Link>
     </Wrapper>
   );
 }

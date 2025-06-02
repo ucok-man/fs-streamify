@@ -1,20 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
+import { UserCheckIcon } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import toast from "react-hot-toast";
 import { apiclient } from "../../../../lib/apiclient";
+import type { FriendRequestWithSenderResponse } from "../../../../types/friend-request-with-sender-response.type";
 import type { MetadataResponse } from "../../../../types/metadata-response.type";
-import type { UserWithFriendRequestResponse } from "../../../../types/user-with-friend-request-response.type";
-import RecommendCard from "../../../recommend-card";
 
-export default function Recommended() {
+export default function IncomingFriendRequest() {
   const { data, isPending, error } = useQuery({
-    queryKey: ["all:users", "recommended"],
+    queryKey: ["incoming:friend:request"],
     queryFn: async () => {
-      const { data } = await apiclient.get(
-        "/users/recommended?page=1&page_size=8"
-      );
+      const { data } = await apiclient.get("/users/friends-request/from");
       return data as {
-        users: UserWithFriendRequestResponse[];
+        friend_requests: FriendRequestWithSenderResponse[];
         metadata: MetadataResponse;
       };
     },
@@ -41,49 +39,36 @@ export default function Recommended() {
     );
   }
 
-  if (data.users.length === 0) {
+  if (data?.friend_requests.length === 0) {
     return (
       <Wrapper>
         <div className="card flex h-[280px] w-full items-center justify-center bg-base-200 p-5 text-center">
           <h3 className="mb-2 text-lg font-semibold">
-            No recommendations available
+            No incoming friends request yet
           </h3>
+          {/* TODO: */}
           <p className="text-base-content opacity-70">
-            Check back later for new language partners!
+            Connect with language partners below to start practicing together!
           </p>
         </div>
       </Wrapper>
     );
   }
 
-  return (
-    <Wrapper>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {data.users.map((user) => (
-          <RecommendCard key={user.id} user={user} />
-        ))}
-      </div>
-    </Wrapper>
-  );
+  console.log({ data });
+
+  return <div>IncomingFriendRequest</div>;
 }
 
 function Wrapper({ children }: PropsWithChildren) {
   return (
-    <section>
-      <div className="mb-6 sm:mb-8">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Meet New Learners
-            </h2>
-            <p className="opacity-70">
-              Discover perfect language exchange partners based on your profile
-            </p>
-          </div>
-        </div>
-      </div>
+    <section className="space-y-4">
+      <h2 className="flex items-center gap-2 text-xl font-semibold">
+        <UserCheckIcon className="h-5 w-5 text-primary" />
+        Incoming Friend Requests
+      </h2>
 
-      <div className="my-8">{children}</div>
+      {children}
     </section>
   );
 }

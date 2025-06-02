@@ -7,7 +7,7 @@ import (
 	"time"
 
 	stream_chat "github.com/GetStream/stream-chat-go/v5"
-	dto "github.com/ucok-man/streamify-api/cmd/dtos"
+	dto "github.com/ucok-man/streamify-api/cmd/web/dtos"
 	"github.com/ucok-man/streamify-api/internal/models"
 	"github.com/ucok-man/streamify-api/internal/validator"
 )

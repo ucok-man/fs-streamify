@@ -213,12 +213,32 @@ func (m *UserModel) Recommended(param RecommendedUserParam) ([]*UserWithFriendRe
 		{Key: "as", Value: "from_friend_request"},
 	}}}
 
+	addFieldsStage := bson.D{{Key: "$addFields", Value: bson.D{
+		{Key: "has_friend_request", Value: bson.D{
+			{Key: "$or", Value: bson.A{
+				bson.D{{Key: "$gt", Value: bson.A{bson.D{{Key: "$size", Value: "$sent_friend_request"}}, 0}}},
+				bson.D{{Key: "$gt", Value: bson.A{bson.D{{Key: "$size", Value: "$from_friend_request"}}, 0}}},
+			}},
+		}},
+	}}}
+
+	sortStage := bson.D{{Key: "$sort", Value: bson.D{
+		{Key: "has_friend_request", Value: 1}, // sort if !has_friend_request appear first
+	}}}
+
 	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
 	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
 
 	// Result and count in a single aggregation
-	resultsPipeline := mongo.Pipeline{matchStage, lookupStageSentFriendRequest, lookupStageFromFriendRequest, skipStage, limitStage}
-	// resultsPipeline := mongo.Pipeline{matchStage, skipStage, limitStage}
+	resultsPipeline := mongo.Pipeline{
+		matchStage,
+		lookupStageSentFriendRequest,
+		lookupStageFromFriendRequest,
+		addFieldsStage,
+		sortStage,
+		skipStage,
+		limitStage,
+	}
 
 	countPipeline := mongo.Pipeline{matchStage, bson.D{{Key: "$count", Value: "total"}}}
 

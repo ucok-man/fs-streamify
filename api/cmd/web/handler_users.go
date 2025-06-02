@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/go-chi/chi/v5"
-	dto "github.com/ucok-man/streamify-api/cmd/dtos"
+	dto "github.com/ucok-man/streamify-api/cmd/web/dtos"
 	"github.com/ucok-man/streamify-api/internal/models"
 	"github.com/ucok-man/streamify-api/internal/validator"
 	"go.mongodb.org/mongo-driver/v2/bson"
