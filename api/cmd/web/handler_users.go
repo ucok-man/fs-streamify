@@ -27,6 +27,7 @@ func (app *application) recommended(w http.ResponseWriter, r *http.Request) {
 		app.errBadRequest(w, r, fmt.Errorf("page_size, %v", err))
 		return
 	}
+	dto.Query = app.queryString(r.URL.Query(), "query", "")
 
 	errmap := validator.Schema().RecommendedUser.Validate(&dto)
 	if errmap != nil {
@@ -39,6 +40,7 @@ func (app *application) recommended(w http.ResponseWriter, r *http.Request) {
 		CurrentUser: currentUser,
 		Page:        int64(dto.Page),
 		PageSize:    int64(dto.PageSize),
+		Query:       dto.Query,
 	})
 	if err != nil {
 		app.errInternalServer(w, r, err)
@@ -65,7 +67,7 @@ func (app *application) myfriend(w http.ResponseWriter, r *http.Request) {
 		app.errBadRequest(w, r, fmt.Errorf("page_size, %v", err))
 		return
 	}
-	dto.Search = app.queryString(r.URL.Query(), "search", "")
+	dto.Query = app.queryString(r.URL.Query(), "query", "")
 
 	errmap := validator.Schema().MyFriendsSchema.Validate(&dto)
 	if errmap != nil {
@@ -76,7 +78,7 @@ func (app *application) myfriend(w http.ResponseWriter, r *http.Request) {
 	currentUser := app.contextGetUser(r)
 	users, metadata, err := app.models.User.MyFriends(models.MyFriendsParam{
 		CurrentUser: currentUser,
-		Search:      dto.Search,
+		Query:       dto.Query,
 		Page:        int64(dto.Page),
 		PageSize:    int64(dto.PageSize),
 	})

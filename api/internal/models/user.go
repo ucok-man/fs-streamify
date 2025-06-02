@@ -166,6 +166,7 @@ type RecommendedUserParam struct {
 	CurrentUser *User
 	Page        int64
 	PageSize    int64
+	Query       string
 }
 
 func (m *UserModel) Recommended(param RecommendedUserParam) ([]*UserWithFriendRequest, Metadata, error) {
@@ -176,6 +177,17 @@ func (m *UserModel) Recommended(param RecommendedUserParam) ([]*UserWithFriendRe
 			bson.D{{"is_onboarded", true}},
 		}},
 	}}}
+
+	var searchStage bson.D
+	if param.Query != "" {
+		searchStage = bson.D{{Key: "$search", Value: bson.M{
+			"index": "user_full_name_index",
+			"text": bson.M{
+				"query": param.Query,
+				"path":  "full_name",
+			},
+		}}}
+	}
 
 	lookupStageSentFriendRequest := bson.D{{Key: "$lookup", Value: bson.D{
 		{Key: "from", Value: "friend_request"},
@@ -229,8 +241,15 @@ func (m *UserModel) Recommended(param RecommendedUserParam) ([]*UserWithFriendRe
 	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
 	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
 
-	// Result and count in a single aggregation
-	resultsPipeline := mongo.Pipeline{
+	/* ---------------------------------------------------------------- */
+	/*                          Result Pipeline                         */
+	/* ---------------------------------------------------------------- */
+
+	resultsPipeline := mongo.Pipeline{}
+	if searchStage != nil {
+		resultsPipeline = append(resultsPipeline, searchStage)
+	}
+	resultsPipeline = append(resultsPipeline,
 		matchStage,
 		lookupStageSentFriendRequest,
 		lookupStageFromFriendRequest,
@@ -238,56 +257,60 @@ func (m *UserModel) Recommended(param RecommendedUserParam) ([]*UserWithFriendRe
 		sortStage,
 		skipStage,
 		limitStage,
-	}
+	)
 
-	countPipeline := mongo.Pipeline{matchStage, bson.D{{Key: "$count", Value: "total"}}}
-
-	facetStage := bson.D{{Key: "$facet", Value: bson.M{
-		"data":  resultsPipeline,
-		"count": countPipeline,
-	}}}
-
-	pipeline := mongo.Pipeline{facetStage}
-
-	// Execute
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cursor, err := m.coll.Aggregate(ctx, pipeline)
+	cursor, err := m.coll.Aggregate(ctx, resultsPipeline)
 	if err != nil {
-		return nil, Metadata{}, err
+		return []*UserWithFriendRequest{}, Metadata{}, err
 	}
 	defer cursor.Close(ctx)
 
-	var rawResult []struct {
-		Data  []*UserWithFriendRequest `bson:"data"`
-		Count []struct {
-			Total int64 `bson:"total"`
-		} `bson:"count"`
+	var results []*UserWithFriendRequest
+	if err := cursor.All(ctx, &results); err != nil {
+		return []*UserWithFriendRequest{}, Metadata{}, err
 	}
 
-	if err := cursor.All(ctx, &rawResult); err != nil {
-		return nil, Metadata{}, err
+	if len(results) == 0 {
+		return []*UserWithFriendRequest{}, Metadata{}, nil
 	}
 
-	if len(rawResult) == 0 {
-		return nil, Metadata{}, nil
+	/* ---------------------------------------------------------------- */
+	/*                          Count Pipeline                          */
+	/* ---------------------------------------------------------------- */
+
+	countPipeline := mongo.Pipeline{}
+	if searchStage != nil {
+		countPipeline = append(countPipeline, searchStage)
 	}
-	result := rawResult[0]
+	countPipeline = append(countPipeline, matchStage)
+	countPipeline = append(countPipeline, bson.D{{Key: "$count", Value: "total"}})
 
-	var totalCount int64
-	if len(result.Count) > 0 {
-		totalCount = result.Count[0].Total
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cursor, err = m.coll.Aggregate(ctx, countPipeline)
+	if err != nil {
+		return []*UserWithFriendRequest{}, Metadata{}, err
+	}
+	defer cursor.Close(ctx)
+
+	var count []struct {
+		Total int64 `bson:"total"`
+	}
+	if err := cursor.All(ctx, &count); err != nil {
+		return []*UserWithFriendRequest{}, Metadata{}, err
 	}
 
-	metadata := calculateMetadata(totalCount, param.Page, param.PageSize)
-
-	return result.Data, metadata, nil
+	metadata := calculateMetadata(count[0].Total, param.Page, param.PageSize)
+	return results, metadata, nil
 }
 
 type MyFriendsParam struct {
 	CurrentUser *User
-	Search      string
+	Query       string
 	Page        int64
 	PageSize    int64
 }
@@ -301,11 +324,11 @@ func (m *UserModel) MyFriends(param MyFriendsParam) ([]*User, Metadata, error) {
 
 	// Step 2: Optional search by full_name using Atlas Search
 	var searchStage bson.D
-	if param.Search != "" {
+	if param.Query != "" {
 		searchStage = bson.D{{Key: "$search", Value: bson.M{
 			"index": "user_full_name_index",
 			"text": bson.M{
-				"query": param.Search,
+				"query": param.Query,
 				"path":  "full_name",
 			},
 		}}}
@@ -315,60 +338,63 @@ func (m *UserModel) MyFriends(param MyFriendsParam) ([]*User, Metadata, error) {
 	skipStage := bson.D{{Key: "$skip", Value: (param.Page - 1) * param.PageSize}}
 	limitStage := bson.D{{Key: "$limit", Value: param.PageSize}}
 
-	// $facet untuk split antara hasil dan count
+	/* ---------------------------------------------------------------- */
+	/*                          Result Pipeline                         */
+	/* ---------------------------------------------------------------- */
+
 	resultsPipeline := mongo.Pipeline{}
 	if searchStage != nil {
 		resultsPipeline = append(resultsPipeline, searchStage)
 	}
-	resultsPipeline = append(resultsPipeline, skipStage, limitStage)
+	resultsPipeline = append(resultsPipeline, matchStage, skipStage, limitStage)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cursor, err := m.coll.Aggregate(ctx, resultsPipeline)
+	if err != nil {
+		return []*User{}, Metadata{}, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []*User
+	if err := cursor.All(ctx, &results); err != nil {
+		return []*User{}, Metadata{}, err
+	}
+
+	if len(results) <= 0 {
+		return []*User{}, Metadata{}, err
+	}
+
+	/* ---------------------------------------------------------------- */
+	/*                          Count Pipeline                          */
+	/* ---------------------------------------------------------------- */
 
 	countPipeline := mongo.Pipeline{}
 	if searchStage != nil {
 		countPipeline = append(countPipeline, searchStage)
 	}
+	countPipeline = append(countPipeline, matchStage)
 	countPipeline = append(countPipeline, bson.D{{Key: "$count", Value: "total"}})
 
-	facetStage := bson.D{{Key: "$facet", Value: bson.M{
-		"data":  resultsPipeline,
-		"count": countPipeline,
-	}}}
-
-	pipeline := mongo.Pipeline{matchStage, facetStage}
-
-	// Execute
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cursor, err := m.coll.Aggregate(ctx, pipeline)
+	cursor, err = m.coll.Aggregate(ctx, countPipeline)
 	if err != nil {
-		return nil, Metadata{}, err
+		return []*User{}, Metadata{}, err
 	}
 	defer cursor.Close(ctx)
 
-	var rawResult []struct {
-		Data  []*User `bson:"data"`
-		Count []struct {
-			Total int64 `bson:"total"`
-		} `bson:"count"`
+	var count []struct {
+		Total int64 `bson:"total"`
 	}
-
-	if err := cursor.All(ctx, &rawResult); err != nil {
-		return nil, Metadata{}, err
+	if err := cursor.All(ctx, &count); err != nil {
+		return []*User{}, Metadata{}, err
 	}
+	metadata := calculateMetadata(count[0].Total, param.Page, param.PageSize)
 
-	if len(rawResult) <= 0 {
-		return nil, Metadata{}, err
-	}
-	result := rawResult[0]
-
-	var totalCount int64
-	if len(result.Count) > 0 {
-		totalCount = result.Count[0].Total
-	}
-
-	metadata := calculateMetadata(totalCount, param.Page, param.PageSize)
-
-	return result.Data, metadata, nil
+	return results, metadata, nil
 }
 
 func (m *UserModel) AddFriends(id bson.ObjectID, friendId bson.ObjectID) error {

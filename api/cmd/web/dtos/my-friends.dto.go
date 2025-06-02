@@ -1,7 +1,7 @@
 package dto
 
 type MyFriendsDTO struct {
-	Search   string
+	Query    string
 	Page     int
 	PageSize int
 }
