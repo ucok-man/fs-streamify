@@ -2,3 +2,36 @@
 @plugin "daisyui" {
   themes: all;
 }
+
+@layer theme {
+  .str-chat__channel {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(to bottom, #c9e8c9, #b7e7bb) !important;
+    height: 100% !important;
+  }
+
+  .str-chat__container {
+    max-width: 1200px !important;
+    width: 100% !important;
+    height: 80% !important;
+    margin: 0 auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    overflow: hidden !important;
+  }
+
+  .str-chat__list {
+    background-color: #ffffff !important;
+    padding: 12px !important;
+  }
+
+  .str-chat__list-notifications {
+    display: none !important;
+  }
+
+  .str-chat__message-input {
+    border-top: 1px solid #ddd !important;
+  }
+}

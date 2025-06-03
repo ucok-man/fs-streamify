@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
+	stream "github.com/GetStream/stream-chat-go/v5"
 	"github.com/spf13/cobra"
 	"github.com/ucok-man/streamify-api/internal/config"
 	"github.com/ucok-man/streamify-api/internal/logger"
@@ -48,6 +49,11 @@ var SeedCmd = &cobra.Command{
 		logger.Info().Msg("Begin seeding users...")
 		mc := &models.User{}
 
+		streamclient, err := stream.NewClient(cfg.GetStreamIO.ApiKey, cfg.GetStreamIO.ApiSecret)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed initialize stream chat client")
+		}
+
 		for i := 0; i < 100; i++ {
 			rndname := ng.Generate()
 			name := strings.Join(strings.Split(rndname, "-"), " ")
@@ -88,6 +94,16 @@ var SeedCmd = &cobra.Command{
 			userID, ok := result.InsertedID.(bson.ObjectID)
 			if !ok {
 				logger.Fatal().Err(fmt.Errorf("inserted ID is not ObjectID")).Msg("Error insert user result")
+			}
+
+			// Create user in getstream.io
+			_, err = streamclient.UpsertUser(context.Background(), &stream.User{
+				ID:    userID.Hex(),
+				Name:  user.FullName,
+				Image: user.ProfilePic,
+			})
+			if err != nil {
+				logger.Fatal().Err(err).Msg("Error creating stream user")
 			}
 
 			if i == 0 {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	stream_chat "github.com/GetStream/stream-chat-go/v5"
+	stream "github.com/GetStream/stream-chat-go/v5"
 	dto "github.com/ucok-man/streamify-api/cmd/web/dtos"
 	"github.com/ucok-man/streamify-api/internal/models"
 	"github.com/ucok-man/streamify-api/internal/validator"
@@ -51,7 +51,7 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create user in getstream.io
-	_, err = app.stream.UpsertUser(context.Background(), &stream_chat.User{
+	_, err = app.stream.UpsertUser(context.Background(), &stream.User{
 		ID:    user.ID.Hex(),
 		Name:  user.FullName,
 		Image: user.ProfilePic,
@@ -191,7 +191,7 @@ func (app *application) onboarding(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update user in getstream.io
-	_, err = app.stream.UpsertUser(context.Background(), &stream_chat.User{
+	_, err = app.stream.UpsertUser(context.Background(), &stream.User{
 		ID:    user.ID.Hex(),
 		Name:  user.FullName,
 		Image: user.ProfilePic,
