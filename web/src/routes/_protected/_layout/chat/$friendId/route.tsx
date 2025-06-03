@@ -71,10 +71,6 @@ function ChatPage() {
   const { channel, streamclient } = Route.useLoaderData();
   useEffect(() => {
     channel.watch();
-
-    // return () => {
-    //   streamclient.disconnectUser(); // Clean up on unmount
-    // };
   }, [channel, streamclient]);
 
   return (
@@ -85,7 +81,12 @@ function ChatPage() {
             {/* Call Btn */}
             <div className="absolute top-0 mx-auto flex w-full max-w-7xl items-center justify-end border-b p-3">
               <button
-                onClick={() => {}}
+                onClick={() => {
+                  const callUrl = `${window.location.origin}/call/${channel.id}`;
+                  channel.sendMessage({
+                    text: `I've started a video call. Join me here: ${callUrl}`,
+                  });
+                }}
                 className="btn text-white btn-sm btn-success"
               >
                 <VideoIcon className="size-6" />

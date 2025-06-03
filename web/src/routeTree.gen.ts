@@ -16,7 +16,7 @@ import { Route as ProtectedLayoutRouteImport } from './routes/_protected/_layout
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup/route'
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin/route'
 import { Route as AuthOnboardingRouteImport } from './routes/_auth/onboarding/route'
-import { Route as ProtectedCallIdRouteImport } from './routes/_protected/call/$id/route'
+import { Route as ProtectedCallChannelIdRouteImport } from './routes/_protected/call/$channelId/route'
 import { Route as ProtectedLayoutNotificationRouteImport } from './routes/_protected/_layout/notification/route'
 import { Route as ProtectedLayoutFriendRouteImport } from './routes/_protected/_layout/friend/route'
 import { Route as ProtectedLayouthomeIndexImport } from './routes/_protected/_layout/(home)/index'
@@ -52,11 +52,12 @@ const AuthOnboardingRouteRoute = AuthOnboardingRouteImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const ProtectedCallIdRouteRoute = ProtectedCallIdRouteImport.update({
-  id: '/call/$id',
-  path: '/call/$id',
-  getParentRoute: () => ProtectedRouteRoute,
-} as any)
+const ProtectedCallChannelIdRouteRoute =
+  ProtectedCallChannelIdRouteImport.update({
+    id: '/call/$channelId',
+    path: '/call/$channelId',
+    getParentRoute: () => ProtectedRouteRoute,
+  } as any)
 
 const ProtectedLayoutNotificationRouteRoute =
   ProtectedLayoutNotificationRouteImport.update({
@@ -139,11 +140,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedLayoutNotificationRouteImport
       parentRoute: typeof ProtectedLayoutRouteImport
     }
-    '/_protected/call/$id': {
-      id: '/_protected/call/$id'
-      path: '/call/$id'
-      fullPath: '/call/$id'
-      preLoaderRoute: typeof ProtectedCallIdRouteImport
+    '/_protected/call/$channelId': {
+      id: '/_protected/call/$channelId'
+      path: '/call/$channelId'
+      fullPath: '/call/$channelId'
+      preLoaderRoute: typeof ProtectedCallChannelIdRouteImport
       parentRoute: typeof ProtectedRouteImport
     }
     '/_protected/_layout/chat/$friendId': {
@@ -184,12 +185,12 @@ const ProtectedLayoutRouteRouteWithChildren =
 
 interface ProtectedRouteRouteChildren {
   ProtectedLayoutRouteRoute: typeof ProtectedLayoutRouteRouteWithChildren
-  ProtectedCallIdRouteRoute: typeof ProtectedCallIdRouteRoute
+  ProtectedCallChannelIdRouteRoute: typeof ProtectedCallChannelIdRouteRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
   ProtectedLayoutRouteRoute: ProtectedLayoutRouteRouteWithChildren,
-  ProtectedCallIdRouteRoute: ProtectedCallIdRouteRoute,
+  ProtectedCallChannelIdRouteRoute: ProtectedCallChannelIdRouteRoute,
 }
 
 const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
@@ -203,7 +204,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRouteRoute
   '/friend': typeof ProtectedLayoutFriendRouteRoute
   '/notification': typeof ProtectedLayoutNotificationRouteRoute
-  '/call/$id': typeof ProtectedCallIdRouteRoute
+  '/call/$channelId': typeof ProtectedCallChannelIdRouteRoute
   '/chat/$friendId': typeof ProtectedLayoutChatFriendIdRouteRoute
   '/': typeof ProtectedLayouthomeIndexRoute
 }
@@ -215,7 +216,7 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRouteRoute
   '/friend': typeof ProtectedLayoutFriendRouteRoute
   '/notification': typeof ProtectedLayoutNotificationRouteRoute
-  '/call/$id': typeof ProtectedCallIdRouteRoute
+  '/call/$channelId': typeof ProtectedCallChannelIdRouteRoute
   '/chat/$friendId': typeof ProtectedLayoutChatFriendIdRouteRoute
   '/': typeof ProtectedLayouthomeIndexRoute
 }
@@ -229,7 +230,7 @@ export interface FileRoutesById {
   '/_protected/_layout': typeof ProtectedLayoutRouteRouteWithChildren
   '/_protected/_layout/friend': typeof ProtectedLayoutFriendRouteRoute
   '/_protected/_layout/notification': typeof ProtectedLayoutNotificationRouteRoute
-  '/_protected/call/$id': typeof ProtectedCallIdRouteRoute
+  '/_protected/call/$channelId': typeof ProtectedCallChannelIdRouteRoute
   '/_protected/_layout/chat/$friendId': typeof ProtectedLayoutChatFriendIdRouteRoute
   '/_protected/_layout/(home)/': typeof ProtectedLayouthomeIndexRoute
 }
@@ -243,7 +244,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/friend'
     | '/notification'
-    | '/call/$id'
+    | '/call/$channelId'
     | '/chat/$friendId'
     | '/'
   fileRoutesByTo: FileRoutesByTo
@@ -254,7 +255,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/friend'
     | '/notification'
-    | '/call/$id'
+    | '/call/$channelId'
     | '/chat/$friendId'
     | '/'
   id:
@@ -266,7 +267,7 @@ export interface FileRouteTypes {
     | '/_protected/_layout'
     | '/_protected/_layout/friend'
     | '/_protected/_layout/notification'
-    | '/_protected/call/$id'
+    | '/_protected/call/$channelId'
     | '/_protected/_layout/chat/$friendId'
     | '/_protected/_layout/(home)/'
   fileRoutesById: FileRoutesById
@@ -306,7 +307,7 @@ export const routeTree = rootRoute
       "filePath": "_protected/route.tsx",
       "children": [
         "/_protected/_layout",
-        "/_protected/call/$id"
+        "/_protected/call/$channelId"
       ]
     },
     "/_auth/onboarding": {
@@ -336,8 +337,8 @@ export const routeTree = rootRoute
       "filePath": "_protected/_layout/notification/route.tsx",
       "parent": "/_protected/_layout"
     },
-    "/_protected/call/$id": {
-      "filePath": "_protected/call/$id/route.tsx",
+    "/_protected/call/$channelId": {
+      "filePath": "_protected/call/$channelId/route.tsx",
       "parent": "/_protected"
     },
     "/_protected/_layout/chat/$friendId": {
