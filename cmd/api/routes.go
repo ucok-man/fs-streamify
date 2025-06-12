@@ -15,18 +15,18 @@ func (app *application) routes() http.Handler {
 	// r.Use(app.withCORS)
 
 	// Handle Static Asset And Frontend
-	// if app.config.Env == "production" {
-	staticDir := http.Dir("./build/ui")
-	fs := http.FileServer(staticDir)
+	if app.config.Env == "production" {
+		staticDir := http.Dir("./build/ui")
+		fs := http.FileServer(staticDir)
 
-	// Serve static assets (Vite outputs to /assets)
-	r.Handle("/assets/*", fs)
+		// Serve static assets (Vite outputs to /assets)
+		r.Handle("/assets/*", fs)
 
-	// Serve index.html for all other non-API routes (SPA fallback)
-	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./build/ui/index.html")
-	})
-	// }
+		// Serve index.html for all other non-API routes (SPA fallback)
+		r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "./build/ui/index.html")
+		})
+	}
 
 	apiv1 := chi.NewRouter()
 	apiv1.Group(func(r chi.Router) {
