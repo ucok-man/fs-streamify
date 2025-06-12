@@ -91,7 +91,7 @@ export default function IncomingFriendRequest() {
     <Wrapper>
       <div className="absolute top-0 left-[272px]">
         <div className="badge badge-warning">
-          {data.pages.at(0)?.metadata.total_records}
+          {data.pages[0]?.metadata.total_records}
         </div>
       </div>
 
