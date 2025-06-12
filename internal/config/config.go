@@ -20,7 +20,7 @@ func init() {
 }
 
 type Config struct {
-	Port int    `mapstructure:"API_PORT"`
+	Port int    `mapstructure:"PORT"`
 	Env  string `mapstructure:"API_ENV"`
 	Log  struct {
 		Level string `mapstructure:"API_LOG_LEVEL"`
