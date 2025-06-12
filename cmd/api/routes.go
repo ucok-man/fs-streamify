@@ -14,20 +14,6 @@ func (app *application) routes() http.Handler {
 	r.Use(app.withRecover)
 	// r.Use(app.withCORS)
 
-	// Handle Static Asset And Frontend
-	if app.config.Env == "production" {
-		staticDir := http.Dir("./build/ui")
-		fs := http.FileServer(staticDir)
-
-		// Serve static assets (Vite outputs to /assets)
-		r.Handle("/assets/*", fs)
-
-		// Serve index.html for all other non-API routes (SPA fallback)
-		r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "./build/ui/index.html")
-		})
-	}
-
 	apiv1 := chi.NewRouter()
 	apiv1.Group(func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
@@ -57,6 +43,21 @@ func (app *application) routes() http.Handler {
 			r.Get("/token", app.getStreamToken)
 		})
 	})
+
+	if app.config.Env == "production" {
+		staticDir := http.Dir("./build/ui")
+		fs := http.FileServer(staticDir)
+
+		// Serve static files and fallback to index.html for SPA routes
+		r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+			if _, err := staticDir.Open(r.URL.Path); err == nil {
+				fs.ServeHTTP(w, r)
+			} else {
+				// Serve index.html for non-existent paths (e.g. /dashboard, /settings)
+				http.ServeFile(w, r, "./build/ui/index.html")
+			}
+		})
+	}
 
 	r.Mount("/api/v1", apiv1)
 	return r
