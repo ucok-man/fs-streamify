@@ -14,6 +14,8 @@
     "@stream-io/video-react-sdk": "^1.18.3",
     "@tailwindcss/vite": "^4.1.7",
     "@tanstack/react-query": "^5.77.2",
+    "@tanstack/react-router": "^1.121.2",
+    "@tanstack/react-router-devtools": "^1.121.5",
     "axios": "^1.9.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
@@ -26,11 +28,13 @@
     "stream-chat-react": "^13.0.5",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "^4.1.7",
-    "usehooks-ts": "^3.1.1"
+    "usehooks-ts": "^3.1.1",
+    "zod": "^3.25.62"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
     "@hyoban/eslint-plugin-tailwindcss": "^4.0.0-alpha.12",
+    "@tanstack/router-plugin": "^1.121.4",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
