@@ -2,7 +2,7 @@
 
 Streamify is a learning language platform that allows users to connect, interact, and engage with their community through chat and video calls. Designed for seamless social interaction, Streamify combines modern technologies and clean UI to deliver a fast and user-friendly experience.
 
-Deployemnt link: [https://streamify-pkgp.onrender.com/](https://streamify-pkgp.onrender.com/).
+Deployemnt link: [Streamify](https://streamify-pkgp.onrender.com/).
 
 ## Feature
 
